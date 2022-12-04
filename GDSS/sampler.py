@@ -7,18 +7,20 @@ import torch
 from utils.logger import Logger, set_log, start_log, train_log, sample_log, check_log
 from utils.loader import load_ckpt, load_data, load_seed, load_device, load_model_from_ckpt, \
                          load_ema_from_ckpt, load_sampling_fn, load_eval_settings
-from utils.graph_utils import adjs_to_graphs, init_flags, quantize
+from utils.graph_utils import adjs_to_graphs, init_flags, quantize, node_flags
 from utils.plot import save_graph_list, plot_graphs_list
 from evaluation.stats import eval_graph_list
 
 
 # -------- Sampler for generic graph generation tasks --------
 class Sampler(object):
-    def __init__(self, config):
+    def __init__(self, config, num_sampling_rounds, train_loader):
         super(Sampler, self).__init__()
 
         self.config = config
         self.device = load_device()
+        self.num_sampling_rounds = num_sampling_rounds
+        self.train_loader = train_loader
 
     def sample(self):
         # -------- Load checkpoint --------
@@ -26,7 +28,6 @@ class Sampler(object):
         self.configt = self.ckpt_dict['config']
 
         load_seed(self.configt.seed)
-        self.train_graph_list, self.test_graph_list = load_data(self.configt, get_graph_list=True)
 
         self.log_folder_name, self.log_dir, _ = set_log(self.configt, is_train=False)
         self.log_name = f"{self.config.ckpt}-sample"
@@ -55,12 +56,15 @@ class Sampler(object):
         logger.log(f'GEN SEED: {self.config.sample.seed}')
         load_seed(self.config.sample.seed)
 
-        num_sampling_rounds = math.ceil(len(self.test_graph_list) / self.configt.data.batch_size)
+        num_sampling_rounds = self.num_sampling_rounds
         gen_graph_list = []
         for r in range(num_sampling_rounds):
             t_start = time.time()
 
-            self.init_flags = init_flags(self.train_graph_list, self.configt).to(self.device[0])
+            _, train_adj = next(iter(self.train_loader))
+            device_id = f'cuda:{self.device[0]}' if isinstance(self.device, list) else self.device
+            train_adj = train_adj.to(device_id)
+            self.init_flags = node_flags(train_adj)
 
             x, adj, _ = self.sampling_fn(self.model_x, self.model_adj, self.init_flags)
 
@@ -68,14 +72,6 @@ class Sampler(object):
 
             samples_int = quantize(adj)
             gen_graph_list.extend(adjs_to_graphs(samples_int, True))
-
-        gen_graph_list = gen_graph_list[:len(self.test_graph_list)]
-
-        # -------- Evaluation --------
-        methods, kernels = load_eval_settings(self.config.data.data)
-        result_dict = eval_graph_list(self.test_graph_list, gen_graph_list, methods=methods, kernels=kernels)
-        logger.log(f'MMD_full {result_dict}', verbose=False)
-        logger.log('='*100)
 
         # -------- Save samples --------
         save_dir = save_graph_list(self.log_folder_name, self.log_name, gen_graph_list)
