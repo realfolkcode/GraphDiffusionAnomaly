@@ -18,7 +18,7 @@ class Trainer(object):
 
         self.seed = load_seed(self.config.seed)
         self.device = load_device()
-        self.train_loader, self.test_loader = load_data(self.config)
+        #self.train_loader, self.test_loader = load_data(self.config)
 
         self.params_x, self.params_adj = load_model_params(self.config)
     
@@ -84,32 +84,12 @@ class Trainer(object):
 
             self.model_x.eval()
             self.model_adj.eval()
-            for _, test_b in enumerate(self.test_loader):   
-                
-                x, adj = load_batch(test_b, self.device)
-                loss_subject = (x, adj)
-
-                with torch.no_grad():
-                    self.ema_x.store(self.model_x.parameters())
-                    self.ema_x.copy_to(self.model_x.parameters())
-                    self.ema_adj.store(self.model_adj.parameters())
-                    self.ema_adj.copy_to(self.model_adj.parameters())
-
-                    loss_x, loss_adj = self.loss_fn(self.model_x, self.model_adj, *loss_subject)
-                    self.test_x.append(loss_x.item())
-                    self.test_adj.append(loss_adj.item())
-
-                    self.ema_x.restore(self.model_x.parameters())
-                    self.ema_adj.restore(self.model_adj.parameters())
 
             mean_train_x = np.mean(self.train_x)
             mean_train_adj = np.mean(self.train_adj)
-            mean_test_x = np.mean(self.test_x)
-            mean_test_adj = np.mean(self.test_adj)
 
             # -------- Log losses --------
             logger.log(f'{epoch+1:03d} | {time.time()-t_start:.2f}s | '
-                        f'test x: {mean_test_x:.3e} | test adj: {mean_test_adj:.3e} | '
                         f'train x: {mean_train_x:.3e} | train adj: {mean_train_adj:.3e} | ', verbose=False)
 
             # -------- Save checkpoints --------
@@ -127,7 +107,7 @@ class Trainer(object):
                     }, f'./checkpoints/{self.config.data.data}/{self.ckpt + save_name}.pth')
             
             if epoch % self.config.train.print_interval == self.config.train.print_interval-1:
-                tqdm.write(f'[EPOCH {epoch+1:04d}] test adj: {mean_test_adj:.3e} | train adj: {mean_train_adj:.3e} | '
-                            f'test x: {mean_test_x:.3e} | train x: {mean_train_x:.3e}')
+                tqdm.write(f'[EPOCH {epoch+1:04d}] train adj: {mean_train_adj:.3e} | '
+                            f'train x: {mean_train_x:.3e}')
         print(' ')
         return self.ckpt
