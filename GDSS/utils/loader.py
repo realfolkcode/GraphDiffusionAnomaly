@@ -2,13 +2,13 @@ import torch
 import random
 import numpy as np
 
-from models.ScoreNetwork_A import ScoreNetworkA
-from models.ScoreNetwork_X import ScoreNetworkX, ScoreNetworkX_GMH
+from ..models.ScoreNetwork_A import ScoreNetworkA
+from ..models.ScoreNetwork_X import ScoreNetworkX, ScoreNetworkX_GMH
 from sde import VPSDE, VESDE, subVPSDE
 
 from losses import get_sde_loss_fn
 from solver import get_pc_sampler, S4_solver
-from evaluation.mmd import gaussian, gaussian_emd
+from ..evaluation.mmd import gaussian, gaussian_emd
 from utils.ema import ExponentialMovingAverage
 
 
