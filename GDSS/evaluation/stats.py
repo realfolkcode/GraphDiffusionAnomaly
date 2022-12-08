@@ -8,8 +8,8 @@ from scipy.linalg import eigvalsh
 import networkx as nx
 import numpy as np
 
-from evaluation.mmd import process_tensor, compute_mmd, gaussian, gaussian_emd, compute_nspdk_mmd
-from utils.graph_utils import adjs_to_graphs
+from .mmd import process_tensor, compute_mmd, gaussian, gaussian_emd, compute_nspdk_mmd
+from ..utils.graph_utils import adjs_to_graphs
 
 PRINT_TIME = False 
 # -------- the relative path to the orca dir --------

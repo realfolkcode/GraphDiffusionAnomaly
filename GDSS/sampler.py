@@ -9,7 +9,7 @@ from .utils.loader import load_ckpt, load_data, load_seed, load_device, load_mod
                          load_ema_from_ckpt, load_sampling_fn, load_eval_settings
 from .utils.graph_utils import adjs_to_graphs, init_flags, quantize, node_flags
 from .utils.plot import save_graph_list, plot_graphs_list
-from .evaluation.stats import eval_graph_list
+#from .evaluation.stats import eval_graph_list
 
 
 # -------- Sampler for generic graph generation tasks --------
