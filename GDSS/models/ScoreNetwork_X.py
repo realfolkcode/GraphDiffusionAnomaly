@@ -1,9 +1,9 @@
 import torch
 import torch.nn.functional as F
 
-from models.layers import DenseGCNConv, MLP
-from utils.graph_utils import mask_x, pow_tensor
-from models.attention import  AttentionLayer
+from .layers import DenseGCNConv, MLP
+from ..utils.graph_utils import mask_x, pow_tensor
+from .attention import  AttentionLayer
 
 
 class ScoreNetworkX(torch.nn.Module):

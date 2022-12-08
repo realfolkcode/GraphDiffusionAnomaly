@@ -3,8 +3,8 @@ import torch
 from torch.nn import Parameter
 import torch.nn.functional as F
 
-from models.layers import DenseGCNConv, MLP
-from utils.graph_utils import mask_adjs, mask_x
+from .layers import DenseGCNConv, MLP
+from ..utils.graph_utils import mask_adjs, mask_x
 
 
 # -------- Graph Multi-Head Attention (GMH) --------

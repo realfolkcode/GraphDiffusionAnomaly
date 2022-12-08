@@ -1,6 +1,6 @@
 import torch
-from sde import VPSDE, VESDE, subVPSDE
-from utils.graph_utils import node_flags, mask_x, mask_adjs, gen_noise
+from .sde import VPSDE, VESDE, subVPSDE
+from .utils.graph_utils import node_flags, mask_x, mask_adjs, gen_noise
 
 
 def get_score_fn(sde, model, train=True, continuous=True):

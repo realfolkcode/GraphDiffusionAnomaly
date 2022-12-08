@@ -4,9 +4,9 @@ from tqdm import tqdm, trange
 import numpy as np
 import torch
 
-from utils.loader import load_seed, load_device, load_data, load_model_params, load_model_optimizer, \
+from .utils.loader import load_seed, load_device, load_data, load_model_params, load_model_optimizer, \
                          load_ema, load_loss_fn, load_batch
-from utils.logger import Logger, set_log, start_log, train_log
+from .utils.logger import Logger, set_log, start_log, train_log
 
 
 class Trainer(object):
