@@ -41,7 +41,7 @@ def dataloader(config, dataset):
     loader = GraphDataLoader(
         dataset,
         sampler=train_sampler,
-        batch_size=128,
+        batch_size=config.data.batch_size,
         drop_last=True,
         collate_fn=partial(collate_fn, max_node_num=config.data.max_node_num)
     )
