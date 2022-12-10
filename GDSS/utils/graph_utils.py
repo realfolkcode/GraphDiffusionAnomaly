@@ -150,8 +150,8 @@ def pad_adjs(ori_adj, node_number):
         return a
     if ori_len > node_number:
         raise ValueError(f'ori_len {ori_len} > node_number {node_number}')
-    a = np.concatenate([a, np.zeros([ori_len, node_number - ori_len])], axis=-1)
-    a = np.concatenate([a, np.zeros([node_number - ori_len, node_number])], axis=0)
+    a = torch.cat([a, torch.zeros((ori_len, node_number - ori_len))], dim=-1)
+    a = torch.cat([a, torch.zeros((node_number - ori_len, node_number))], dim=0)
     return a
 
 
