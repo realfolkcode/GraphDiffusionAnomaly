@@ -8,7 +8,7 @@ from ..sde import VPSDE, VESDE, subVPSDE
 
 from ..losses import get_sde_loss_fn
 from ..solver import get_pc_sampler, S4_solver
-from ..evaluation.mmd import gaussian, gaussian_emd
+#from ..evaluation.mmd import gaussian, gaussian_emd
 from .ema import ExponentialMovingAverage
 
 
@@ -193,11 +193,11 @@ def load_model_from_ckpt(params, state_dict, device):
     return model
 
 
-def load_eval_settings(data, orbit_on=True):
-    # Settings for generic graph generation
-    methods = ['degree', 'cluster', 'orbit', 'spectral'] 
-    kernels = {'degree':gaussian_emd, 
-                'cluster':gaussian_emd, 
-                'orbit':gaussian,
-                'spectral':gaussian_emd}
-    return methods, kernels
+#def load_eval_settings(data, orbit_on=True):
+#    # Settings for generic graph generation
+#    methods = ['degree', 'cluster', 'orbit', 'spectral'] 
+#    kernels = {'degree':gaussian_emd, 
+#                'cluster':gaussian_emd, 
+#                'orbit':gaussian,
+#                'spectral':gaussian_emd}
+#    return methods, kernels
