@@ -202,18 +202,19 @@ def S4_solver(sde_x, sde_adj, shape_x, shape_adj, predictor='None', corrector='N
                         probability_flow=False, continuous=False,
                         denoise=True, eps=1e-3, device='cuda'):
 
-  def s4_solver(model_x, model_adj, init_flags):
+  def s4_solver(model_x, model_adj, init_flags, x=None, adj=None):
 
     score_fn_x = get_score_fn(sde_x, model_x, train=False, continuous=continuous)
     score_fn_adj = get_score_fn(sde_adj, model_adj, train=False, continuous=continuous)
 
     with torch.no_grad():
       # -------- Initial sample --------
-      x = sde_x.prior_sampling(shape_x).to(device) 
-      adj = sde_adj.prior_sampling_sym(shape_adj).to(device) 
       flags = init_flags
-      x = mask_x(x, flags)
-      adj = mask_adjs(adj, flags)
+      if adj is None:
+          x = sde_x.prior_sampling(shape_x).to(device) 
+          adj = sde_adj.prior_sampling_sym(shape_adj).to(device) 
+          x = mask_x(x, flags)
+          adj = mask_adjs(adj, flags)
       diff_steps = sde_adj.N
       timesteps = torch.linspace(sde_adj.T, eps, diff_steps, device=device)
       dt = -1. / diff_steps
