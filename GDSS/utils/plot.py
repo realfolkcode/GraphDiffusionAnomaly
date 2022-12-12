@@ -30,7 +30,7 @@ def plot_graphs_list(graphs, title='title', max_num=16, save_dir=None, N=0):
         else:
             G = graphs[idx].copy()
         assert isinstance(G, nx.Graph)
-        G.remove_nodes_from(list(nx.isolates(G)))
+        #G.remove_nodes_from(list(nx.isolates(G)))
         e = G.number_of_edges()
         v = G.number_of_nodes()
         l = nx.number_of_selfloops(G)
