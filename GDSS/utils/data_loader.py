@@ -35,14 +35,12 @@ def collate_fn(graphs, max_node_num):
     return x_tensor, adjs_tensor
 
 
-def dataloader(config, dataset):
-    train_idx = dataset.graph.nodes()
-    train_sampler = SubsetRandomSampler(train_idx)
+def dataloader(config, dataset, shuffle=True, drop_last=True):
     loader = GraphDataLoader(
         dataset,
-        sampler=train_sampler,
+        shuffle=shuffle,
         batch_size=config.data.batch_size,
-        drop_last=True,
+        drop_last=drop_last,
         collate_fn=partial(collate_fn, max_node_num=config.data.max_node_num)
     )
     return loader
