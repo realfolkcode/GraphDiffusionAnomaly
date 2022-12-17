@@ -220,7 +220,7 @@ def S4_solver(sde_x, sde_adj, shape_x, shape_adj, predictor='None', corrector='N
       dt = -1. / diff_steps
 
       # -------- Rverse diffusion process --------
-      for i in trange(0, (diff_steps), desc = '[Sampling]', position = 1, leave=False):
+      for i in range(0, (diff_steps)):
         t = timesteps[i]
         vec_t = torch.ones(shape_adj[0], device=t.device) * t
         vec_dt = torch.ones(shape_adj[0], device=t.device) * (dt/2) 
