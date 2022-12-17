@@ -219,11 +219,13 @@ def S4_solver(sde_x, sde_adj, shape_x, shape_adj, predictor='None', corrector='N
       timesteps = torch.linspace(sde_adj.T, eps, diff_steps, device=device)
       dt = -1. / diff_steps
 
+      bs = adj.shape[0]
+
       # -------- Rverse diffusion process --------
       for i in range(0, (diff_steps)):
         t = timesteps[i]
-        vec_t = torch.ones(shape_adj[0], device=t.device) * t
-        vec_dt = torch.ones(shape_adj[0], device=t.device) * (dt/2) 
+        vec_t = torch.ones(bs, device=t.device) * t
+        vec_dt = torch.ones(bs, device=t.device) * (dt/2) 
 
         # -------- Score computation --------
         score_x = score_fn_x(x, adj, flags, vec_t)
