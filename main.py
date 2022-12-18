@@ -33,5 +33,5 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=str, required=True)
     parser.add_argument('--seed', type=int, default=42, required=False)
-    args = parser.parse()
+    args = parser.parse_args()
     main(args)
