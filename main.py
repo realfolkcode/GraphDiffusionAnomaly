@@ -1,23 +1,20 @@
 import dgl
 import torch
 import torch_geometric
-from pygod.utils import load_data
 import numpy as np
-import networkx as nx
-import time
 import argparse
 
-from GDSS.sampler import Sampler
 from GDSS.parsers.config import get_config
 from GDSS.trainer import Trainer
 from GDSS.utils.data_loader import dataloader
-from GDSS.reconstruction import Reconstructor
 
 from data import AnomalyDataset
+from anomaly_scores import calculate_scores
 
 
 def main(args):
     config = get_config(args.config, args.seed)
+    exp_name = args.exp_name
 
     # Load dataset
     dataset_name = config.data.data
@@ -39,8 +36,14 @@ def main(args):
     trainer = Trainer(config)
     train_loader = dataloader(config, dataset)
     trainer.train_loader = train_loader
-    ckpt = trainer.train(args.exp_name)
+    ckpt = trainer.train(exp_name)
     config.ckpt = ckpt
+
+    # Inference
+    x_scores, adj_scores = calculate_scores(config, dataset)
+    with open(f'{exp_name}_scores.npy', 'wb') as f:
+        np.save(f, x_scores.numpy())
+        np.save(f, adj_scores.numpy())
 
 
 if __name__=="__main__":
