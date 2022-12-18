@@ -35,9 +35,9 @@ model:
   
 train:
   name: test
-  num_epochs: 5000
-  save_interval: 5000
-  print_interval: 1000
+  num_epochs: 100
+  save_interval: 100
+  print_interval: 100
   reduce_mean: False
   lr: 0.01
   lr_schedule: True
