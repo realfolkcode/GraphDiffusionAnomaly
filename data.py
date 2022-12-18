@@ -3,6 +3,7 @@ from dgl.data import DGLDataset
 from pygod.utils import load_data
 import torch_geometric
 from torch_geometric.utils import is_undirected
+from torch_geometric.transforms import ToUndirected
 
 
 class AnomalyDataset(DGLDataset):
@@ -12,6 +13,8 @@ class AnomalyDataset(DGLDataset):
     
     def process(self):
         data = load_data(self.name)
+        if not is_undirected(data['edge_index']):
+            data = ToUndirected()(data)
         assert is_undirected(data['edge_index'])
         graph = dgl.from_networkx(
                   torch_geometric.utils.to_networkx(data,
