@@ -13,14 +13,18 @@ class AnomalyDataset(DGLDataset):
     
     def process(self):
         data = load_data(self.name)
+
         if not is_undirected(data['edge_index']):
             data = ToUndirected()(data)
         assert is_undirected(data['edge_index'])
+
         graph = dgl.from_networkx(
                   torch_geometric.utils.to_networkx(data,
                                                     node_attrs=['x']),
                   node_attrs=['x'])
+        
         self.graph = graph
+        self.feat_dim = self.graph.ndata['x'].shape[1]
     
     def __getitem__(self, idx):
         ego_graph = dgl.khop_out_subgraph(self.graph, idx, self.radius)[0]
