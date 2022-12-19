@@ -5,6 +5,8 @@ import torch_geometric
 from torch_geometric.utils import is_undirected
 from torch_geometric.transforms import ToUndirected
 
+from utils import standardize
+
 
 class AnomalyDataset(DGLDataset):
     def __init__(self, name, radius=1):
@@ -17,6 +19,8 @@ class AnomalyDataset(DGLDataset):
         if not is_undirected(data['edge_index']):
             data = ToUndirected()(data)
         assert is_undirected(data['edge_index'])
+
+        data['x'] = standardize(data['x'])
 
         graph = dgl.from_networkx(
                   torch_geometric.utils.to_networkx(data,
