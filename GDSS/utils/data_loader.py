@@ -12,9 +12,9 @@ from .graph_utils import pad_adjs
 def sample_subgraph(g, max_node_num):
     if len(g.nodes()) <= max_node_num:
         return g
-    idx = []
+    idx = [0]
     idx += np.random.choice(np.arange(1, len(g.nodes())), 
-                            max_node_num,
+                            max_node_num - 1,
                             replace=False).tolist()
     return dgl.node_subgraph(g, idx)
 
