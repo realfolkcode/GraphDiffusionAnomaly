@@ -40,10 +40,7 @@ def main(args):
     config.ckpt = ckpt
 
     # Inference
-    x_scores, adj_scores = calculate_scores(config, dataset)
-    with open(f'{exp_name}_scores.npy', 'wb') as f:
-        np.save(f, x_scores.numpy())
-        np.save(f, adj_scores.numpy())
+    calculate_scores(config, dataset, exp_name)
 
 
 if __name__=="__main__":

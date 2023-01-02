@@ -1,11 +1,14 @@
 import torch
+import numpy as np
 from tqdm import tqdm
 
 from GDSS.utils.data_loader import dataloader
+from GDSS.utils.graph_utils import adjs_to_graphs
+from GDSS.utils.plot import plot_graphs_list
 from GDSS.reconstruction import Reconstructor
 
 
-def calculate_scores(config, dataset):
+def calculate_scores(config, dataset, exp_name):
     reconstructor = Reconstructor(config)
     loader = dataloader(config, 
                         dataset,
@@ -14,6 +17,9 @@ def calculate_scores(config, dataset):
 
     x_scores = torch.zeros(len(dataset))
     adj_scores = torch.zeros(len(dataset))
+
+    gen_graph_list = []
+    orig_graph_list = []
 
     for i, batch in tqdm(enumerate(loader)):
         x = batch[0]
@@ -32,5 +38,15 @@ def calculate_scores(config, dataset):
         bs = x.shape[0]
         x_scores[i * bs:(i+1) * bs] = x_err
         adj_scores[i * bs:(i+1) * bs] = adj_err
+
+        # Convert the first batch to networkx for plotting
+        if i == 0:
+            orig_graph_list.extend(adjs_to_graphs(adj, False))
+            gen_graph_list.extend(adjs_to_graphs(adj_reconstructed, False))
     
-    return x_scores, adj_scores
+    plot_graphs_list(graphs=orig_graph_list, title=f'orig_{exp_name}', max_num=16, save_dir='./')
+    plot_graphs_list(graphs=gen_graph_list, title=f'reconstruction_{exp_name}', max_num=16, save_dir='./')
+    
+    with open(f'{exp_name}_scores.npy', 'wb') as f:
+        np.save(f, x_scores.numpy())
+        np.save(f, adj_scores.numpy())
