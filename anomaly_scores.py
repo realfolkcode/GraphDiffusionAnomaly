@@ -41,8 +41,8 @@ def calculate_scores(config, dataset, exp_name):
 
         # Convert the first batch to networkx for plotting
         if i == 0:
-            orig_graph_list.extend(adjs_to_graphs(adj, False))
-            gen_graph_list.extend(adjs_to_graphs(adj_reconstructed, False))
+            orig_graph_list.extend(adjs_to_graphs(adj.numpy(), False))
+            gen_graph_list.extend(adjs_to_graphs(adj_reconstructed.numpy(), False))
     
     plot_graphs_list(graphs=orig_graph_list, title=f'orig_{exp_name}', max_num=16, save_dir='./')
     plot_graphs_list(graphs=gen_graph_list, title=f'reconstruction_{exp_name}', max_num=16, save_dir='./')
