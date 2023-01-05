@@ -1,7 +1,7 @@
 data: 
   data: books
   dir: './data'
-  batch_size: 128 
+  batch_size: 512 
   test_split: 0.2
   max_node_num: 15
   max_feat_num: 64
@@ -35,8 +35,8 @@ model:
   
 train:
   name: test
-  num_epochs: 10
-  save_interval: 5
+  num_epochs: 5000
+  save_interval: 2500
   print_interval: 10
   reduce_mean: False
   lr: 0.01
