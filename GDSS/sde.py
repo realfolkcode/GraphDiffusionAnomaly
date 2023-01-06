@@ -6,13 +6,14 @@ import numpy as np
 class SDE(abc.ABC):
   """SDE abstract class. Functions are designed for a mini-batch of inputs."""
 
-  def __init__(self, N):
+  def __init__(self, N, endtime):
     """Construct an SDE.
     Args:
       N: number of discretization time steps.
     """
     super().__init__()
     self.N = N
+    self.endtime = endtime
 
   @property
   @abc.abstractmethod
@@ -103,14 +104,14 @@ class SDE(abc.ABC):
 
 
 class VPSDE(SDE):
-  def __init__(self, beta_min=0.1, beta_max=20, N=1000):
+  def __init__(self, beta_min=0.1, beta_max=20, N=1000, endtime=1):
     """Construct a Variance Preserving SDE.
     Args:
       beta_min: value of beta(0)
       beta_max: value of beta(1)
       N: number of discretization steps
     """
-    super().__init__(N)
+    super().__init__(N, endtime)
     self.beta_0 = beta_min
     self.beta_1 = beta_max
     self.N = N
@@ -122,7 +123,7 @@ class VPSDE(SDE):
 
   @property
   def T(self):
-    return 1
+    return self.endtime
 
   def sde(self, x, t):
     beta_t = self.beta_0 + t * (self.beta_1 - self.beta_0)
@@ -169,14 +170,14 @@ class VPSDE(SDE):
 
 
 class VESDE(SDE):
-  def __init__(self, sigma_min=0.01, sigma_max=50, N=1000):
+  def __init__(self, sigma_min=0.01, sigma_max=50, N=1000, endtime=1):
     """Construct a Variance Exploding SDE.
     Args:
       sigma_min: smallest sigma.
       sigma_max: largest sigma.
       N: number of discretization steps
     """
-    super().__init__(N)
+    super().__init__(N, endtime)
     self.sigma_min = sigma_min
     self.sigma_max = sigma_max
     self.discrete_sigmas = torch.exp(torch.linspace(np.log(self.sigma_min), np.log(self.sigma_max), N))
@@ -184,7 +185,7 @@ class VESDE(SDE):
 
   @property
   def T(self):
-    return 1
+    return self.endtime
 
   def sde(self, x, t):
     sigma = self.sigma_min * (self.sigma_max / self.sigma_min) ** t
@@ -231,14 +232,14 @@ class VESDE(SDE):
 
 
 class subVPSDE(SDE):
-  def __init__(self, beta_min=0.1, beta_max=20, N=1000):
+  def __init__(self, beta_min=0.1, beta_max=20, N=1000, endtime=1):
     """Construct the sub-VP SDE that excels at likelihoods.
     Args:
       beta_min: value of beta(0)
       beta_max: value of beta(1)
       N: number of discretization steps
     """
-    super().__init__(N)
+    super().__init__(N, endtime)
     self.beta_0 = beta_min
     self.beta_1 = beta_max
     self.N = N
@@ -247,7 +248,7 @@ class subVPSDE(SDE):
 
   @property
   def T(self):
-    return 1
+    return self.endtime
 
   def sde(self, x, t):
     beta_t = self.beta_0 + t * (self.beta_1 - self.beta_0)
