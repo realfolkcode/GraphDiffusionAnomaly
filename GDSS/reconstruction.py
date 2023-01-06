@@ -31,7 +31,7 @@ class Reconstructor(torch.nn.Module):
             self.ema_x.copy_to(self.model_x.parameters())
             self.ema_adj.copy_to(self.model_adj.parameters())
 
-        self.sampling_fn = load_sampling_fn(self.configt, self.config.sampler, self.config.sample, self.device)
+        self.sampling_fn = load_sampling_fn(self.config, self.config.sampler, self.config.sample, self.device)
 
         self.sde_x = load_sde(config.sde.x)
         self.sde_adj = load_sde(config.sde.adj)
