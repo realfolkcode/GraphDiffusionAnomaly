@@ -8,7 +8,7 @@ from GDSS.utils.graph_utils import node_flags, gen_noise, mask_x, mask_adjs, \
 
 
 class Reconstructor(torch.nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, T=None):
         super().__init__()
 
         self.config = config
@@ -35,10 +35,15 @@ class Reconstructor(torch.nn.Module):
 
         self.sde_x = load_sde(config.sde.x)
         self.sde_adj = load_sde(config.sde.adj)
+
+        if T is None:
+            self.T = self.sde_adj.T
+        else:
+            self.T = T
     
 
     def perturb(self, x, adj):
-        t = torch.ones(adj.shape[0], device=adj.device) * self.sde_adj.T
+        t = torch.ones(adj.shape[0], device=adj.device) * self.T
         flags = node_flags(adj)
 
         z_x = gen_noise(x, flags, sym=False)
