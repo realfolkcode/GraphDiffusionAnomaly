@@ -16,11 +16,13 @@ options = {
     'width': 0.5
 }
 
-def plot_graphs_list(graphs, title='title', max_num=16, save_dir=None, N=0, pos=None):
+def plot_graphs_list(graphs, title='title', max_num=16, save_dir=None, N=0, pos_list=None):
     batch_size = len(graphs)
     max_num = min(batch_size, max_num)
     img_c = int(math.ceil(np.sqrt(max_num)))
     figure = plt.figure()
+    if pos_list is None:
+        pos_list = []
 
     for i in range(max_num):
         # idx = i * (batch_size // max_num)
@@ -40,8 +42,10 @@ def plot_graphs_list(graphs, title='title', max_num=16, save_dir=None, N=0, pos=
         # if 'lobster' in save_dir.split('/')[0]:
         #     if is_lobster_graph(graphs[idx]):
         #         title_str += f' [L]'
-        if pos is None:
+        if len(pos_list) < max_num:
             pos = nx.spring_layout(G)
+        else:
+            pos = pos_list[idx]
         nx.draw(G, pos, with_labels=False, **options)
         ax.title.set_text(title_str)
     figure.suptitle(title)

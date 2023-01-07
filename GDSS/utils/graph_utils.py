@@ -108,24 +108,24 @@ def quantize_mol(adjs):
 
 def adjs_to_graphs(adjs, is_cuda=False, empty_nodes=None, return_empty=False):
     graph_list = []
-    empty_nodes_list = []
-    for adj in adjs:
+    if empty_nodes is None:
+        empty_nodes = []
+    for i, adj in enumerate(adjs):
         if is_cuda:
             adj = adj.detach().cpu().numpy()
         G = nx.from_numpy_matrix(adj)
         G.remove_edges_from(nx.selfloop_edges(G))
 
-        if empty_nodes is None:
-            empty_nodes = list(nx.isolates(G))
+        if len(empty_nodes) < len(adjs):
+            empty_nodes.append(list(nx.isolates(G)))
         
-        G.remove_nodes_from(empty_nodes)
+        G.remove_nodes_from(empty_nodes[i])
         if G.number_of_nodes() < 1:
             G.add_node(1)
         graph_list.append(G)
-        empty_nodes_list.append(empty_nodes)
     
     if return_empty:
-        return graph_list, empty_nodes_list
+        return graph_list, empty_nodes
     return graph_list
 
 
