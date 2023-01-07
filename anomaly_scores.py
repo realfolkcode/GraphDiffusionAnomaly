@@ -45,8 +45,8 @@ def calculate_scores(config, dataset, exp_name):
             orig_graph_list.extend(nx_graphs)
             gen_graph_list.extend(adjs_to_graphs(adj_reconstructed.numpy(), False, empty_nodes=empty_nodes))
     
-    pos = plot_graphs_list(graphs=orig_graph_list, title=f'orig_{exp_name}', max_num=16, save_dir='./')
-    _ = plot_graphs_list(graphs=gen_graph_list, title=f'reconstruction_{exp_name}', max_num=16, save_dir='./', pos=pos)
+    pos_list = plot_graphs_list(graphs=orig_graph_list, title=f'orig_{exp_name}', max_num=16, save_dir='./')
+    _ = plot_graphs_list(graphs=gen_graph_list, title=f'reconstruction_{exp_name}', max_num=16, save_dir='./', pos_list=pos_list)
     
     with open(f'{exp_name}_scores.npy', 'wb') as f:
         np.save(f, x_scores.numpy())
