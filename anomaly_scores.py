@@ -43,7 +43,8 @@ def calculate_scores(config, dataset, exp_name):
         # Convert the first batch to networkx for plotting
         if i == 0:
             eps = 1e-9
-            rel_x_err = (x_err * x.shape[1] * x.shape[2]) / (torch.linalg.norm(x, dim=[1, 2]) + eps)
+            rel_x_err = torch.linalg.norm(x - x_reconstructed, dim=[2])
+            rel_x_err /= (torch.linalg.norm(x, dim=[2]) + eps)
 
             nx_graphs, empty_nodes = adjs_to_graphs(adj.numpy(), False, return_empty=True)
             orig_graph_list.extend(nx_graphs)
@@ -51,7 +52,7 @@ def calculate_scores(config, dataset, exp_name):
     
     pos_list = plot_graphs_list(graphs=orig_graph_list, title=f'orig_{exp_name}', max_num=16, save_dir='./')
     _ = plot_graphs_list(graphs=gen_graph_list, title=f'reconstruction_{exp_name}', max_num=16, save_dir='./', 
-                        pos_list=pos_list, rel_x_err=rel_x_err)
+                         pos_list=pos_list, rel_x_err=rel_x_err)
     
     with open(f'{exp_name}_scores.npy', 'wb') as f:
         np.save(f, x_scores.numpy())

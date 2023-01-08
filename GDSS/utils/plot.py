@@ -53,8 +53,8 @@ def plot_graphs_list(graphs, title='title', max_num=16, save_dir=None, N=0,
         if rel_x_err is None:
             nx.draw(G, pos, with_labels=False, **options)
         else:
-            nx.draw(G, pos, with_labels=False, 
-                    node_color=rel_x_err, cmap=plt.cm.RdYlGn, vmin=0, vmax=1)
+            nx.draw(G, pos, with_labels=False, **options,
+                    node_color=rel_x_err[idx][:v], cmap=plt.cm.RdYlGn_r, vmin=0, vmax=1)
         ax.title.set_text(title_str)
     figure.suptitle(title)
 
