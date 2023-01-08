@@ -16,7 +16,8 @@ options = {
     'width': 0.5
 }
 
-def plot_graphs_list(graphs, title='title', max_num=16, save_dir=None, N=0, pos_list=None):
+def plot_graphs_list(graphs, title='title', max_num=16, save_dir=None, N=0, 
+                     pos_list=None, rel_x_err=None):
     batch_size = len(graphs)
     max_num = min(batch_size, max_num)
     img_c = int(math.ceil(np.sqrt(max_num)))
@@ -49,7 +50,11 @@ def plot_graphs_list(graphs, title='title', max_num=16, save_dir=None, N=0, pos_
             pos_list.append(pos)
         else:
             pos = pos_list[idx]
-        nx.draw(G, pos, with_labels=False, **options)
+        if rel_x_err is None:
+            nx.draw(G, pos, with_labels=False, **options)
+        else:
+            nx.draw(G, pos, with_labels=False, 
+                    node_color=rel_x_err, cmap=plt.cm.RdYlGn, vmin=0, vmax=1)
         ax.title.set_text(title_str)
     figure.suptitle(title)
 
