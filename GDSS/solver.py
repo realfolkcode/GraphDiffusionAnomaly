@@ -288,7 +288,8 @@ def S4_solver(sde_x, sde_adj, shape_x, shape_adj, predictor='None', corrector='N
 
 
 # -------- S4 solver --------
-def get_ode_sampler(snr=0.1, scale_eps=1.0, n_steps=1, 
+def get_ode_sampler(sde_x, sde_adj, shape_x, shape_adj, predictor='None', corrector='None',
+                    snr=0.1, scale_eps=1.0, n_steps=1, 
                     probability_flow=False, continuous=False,
                     denoise=True, eps=1e-3, device='cuda',
                     rtol=1e-5, atol=1e-5, method='RK45',):
