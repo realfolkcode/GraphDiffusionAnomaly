@@ -330,9 +330,9 @@ def get_ode_sampler(sde_x, sde_adj, shape_x, shape_adj, predictor='None', correc
         x = from_flattened_numpy(x, shape).to(device).type(torch.float32)
         vec_t = torch.ones(bs, device=x.device) * t
         if is_adj:
-          drift = drift_fn(model_adj, x, adj, flags, t, is_adj)
+          drift = drift_fn(model_adj, x, adj, flags, vec_t, is_adj)
         else:
-          drift = drift_fn(model_x, x, adj, flags, t, is_adj)
+          drift = drift_fn(model_x, x, adj, flags, vec_t, is_adj)
         return to_flattened_numpy(drift)
       
       # Black-box ODE solver for the probability flow ODE
