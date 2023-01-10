@@ -7,7 +7,7 @@ from ..models.ScoreNetwork_X import ScoreNetworkX, ScoreNetworkX_GMH
 from ..sde import VPSDE, VESDE, subVPSDE
 
 from ..losses import get_sde_loss_fn
-from ..solver import get_pc_sampler, S4_solver
+from ..solver import get_pc_sampler, S4_solver, get_ode_sampler
 #from ..evaluation.mmd import gaussian, gaussian_emd
 from .ema import ExponentialMovingAverage
 
@@ -123,7 +123,9 @@ def load_sampling_fn(config_train, config_module, config_sample, device):
 
     device_id = f'cuda:{device[0]}' if isinstance(device, list) else device
 
-    if config_module.predictor == 'S4':
+    if config_module.predictor == 'PF':
+        get_sampler = get_ode_sampler
+    elif config_module.predictor == 'S4':
         get_sampler = S4_solver
     else:
         get_sampler = get_pc_sampler

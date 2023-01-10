@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import abc
 from tqdm import trange
+from scipy import integrate
 
 from .losses import get_score_fn
 from .utils.graph_utils import mask_adjs, mask_x, gen_noise
@@ -284,3 +285,65 @@ def S4_solver(sde_x, sde_adj, shape_x, shape_adj, predictor='None', corrector='N
       print(' ')
       return (x_mean if denoise else x), (adj_mean if denoise else adj), 0
   return s4_solver
+
+
+# -------- S4 solver --------
+def get_ode_sampler(snr=0.1, scale_eps=1.0, n_steps=1, 
+                    probability_flow=False, continuous=False,
+                    denoise=True, eps=1e-3, device='cuda',
+                    rtol=1e-5, atol=1e-5, method='RK45',):
+  def drift_fn(model, x, t, is_adj):
+    """Get the drift function of the reverse-time SDE."""
+    if is_adj:
+      score_fn = get_score_fn(sde_adj, model, train=False, continuous=True)
+      rsde = sde_adj.reverse(score_fn, probability_flow=True)
+    else:
+      score_fn = get_score_fn(sde_x, model, train=False, continuous=True)
+      rsde = sde_x.reverse(score_fn, probability_flow=True)
+    return rsde.sde(x, t)[0]
+
+  def to_flattened_numpy(x):
+    """Flatten a torch tensor `x` and convert it to numpy."""
+    return x.detach().cpu().numpy().reshape((-1,))
+
+  def from_flattened_numpy(x, shape):
+    """Form a torch tensor with the given `shape` from a flattened numpy array `x`."""
+    return torch.from_numpy(x.reshape(shape))
+  
+  def ode_sampler(model_x, model_adj, init_flags, x=None, adj=None):
+    with torch.no_grad():
+      # -------- Initial sample --------
+      flags = init_flags
+      if adj is None:
+          x = sde_x.prior_sampling(shape_x).to(device) 
+          adj = sde_adj.prior_sampling_sym(shape_adj).to(device) 
+          x = mask_x(x, flags)
+          adj = mask_adjs(adj, flags)
+      diff_steps = sde_adj.N
+      timesteps = torch.linspace(sde_adj.T, eps, diff_steps, device=device)
+
+      bs = adj.shape[0]
+
+      def ode_func(t, x, shape, is_adj):
+        x = from_flattened_numpy(x, shape).to(device).type(torch.float32)
+        vec_t = torch.ones(bs, device=x.device) * t
+        if is_adj:
+          drift = drift_fn(model_adj, x, t, is_adj)
+        else:
+          drift = drift_fn(model_x, x, t, is_adj)
+        return to_flattened_numpy(drift)
+      
+      # Black-box ODE solver for the probability flow ODE
+      solution_x = integrate.solve_ivp(ode_func, (sde_x.T, eps, shape_x, False), to_flattened_numpy(x),
+                                       rtol=rtol, atol=atol, method=method)
+      solution_adj = integrate.solve_ivp(ode_func, (sde_adj.T, eps, shape_adj, True), to_flattened_numpy(adj),
+                                         rtol=rtol, atol=atol, method=method)
+      nfe_x = solution_x.nfev
+      nfe_adj = solution_adj.nfev
+
+      x = torch.tensor(solution_x.y[:, -1]).reshape(shape_x).to(device).type(torch.float32)
+      adj = torch.tensor(solution_adj.y[:, -1]).reshape(shape_adj).to(device).type(torch.float32)
+      return x, adj, nfe_adj
+    
+
+  return ode_sampler
