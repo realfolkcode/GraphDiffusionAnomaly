@@ -181,7 +181,7 @@ def get_pc_sampler(sde_x, sde_adj, shape_x, shape_adj, predictor='Euler', correc
       timesteps = torch.linspace(sde_adj.T, eps, diff_steps, device=device)
 
       # -------- Reverse diffusion process --------
-      for i in trange(0, (diff_steps), desc = '[Sampling]', position = 1, leave=False):
+      for i in range(0, (diff_steps)):
         t = timesteps[i]
         vec_t = torch.ones(shape_adj[0], device=t.device) * t
 
