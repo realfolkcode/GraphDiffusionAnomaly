@@ -293,15 +293,16 @@ def get_ode_sampler(sde_x, sde_adj, shape_x, shape_adj, predictor='None', correc
                     probability_flow=False, continuous=False,
                     denoise=True, eps=1e-3, device='cuda',
                     rtol=1e-5, atol=1e-5, method='RK45',):
-  def drift_fn(model, x, t, is_adj):
+  def drift_fn(model, x, adj, flags, t, is_adj):
     """Get the drift function of the reverse-time SDE."""
     if is_adj:
       score_fn = get_score_fn(sde_adj, model, train=False, continuous=True)
       rsde = sde_adj.reverse(score_fn, probability_flow=True)
+      return rsde.sde(x, adj, flags, t, is_adj=True)[0]
     else:
       score_fn = get_score_fn(sde_x, model, train=False, continuous=True)
       rsde = sde_x.reverse(score_fn, probability_flow=True)
-    return rsde.sde(x, t)[0]
+      return rsde.sde(x, adj, flags, t, is_adj=False)[0]
 
   def to_flattened_numpy(x):
     """Flatten a torch tensor `x` and convert it to numpy."""
@@ -329,9 +330,9 @@ def get_ode_sampler(sde_x, sde_adj, shape_x, shape_adj, predictor='None', correc
         x = from_flattened_numpy(x, shape).to(device).type(torch.float32)
         vec_t = torch.ones(bs, device=x.device) * t
         if is_adj:
-          drift = drift_fn(model_adj, x, t, is_adj)
+          drift = drift_fn(model_adj, x, adj, flags, t, is_adj)
         else:
-          drift = drift_fn(model_x, x, t, is_adj)
+          drift = drift_fn(model_x, x, adj, flags, t, is_adj)
         return to_flattened_numpy(drift)
       
       # Black-box ODE solver for the probability flow ODE
