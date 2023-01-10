@@ -335,10 +335,10 @@ def get_ode_sampler(sde_x, sde_adj, shape_x, shape_adj, predictor='None', correc
         return to_flattened_numpy(drift)
       
       # Black-box ODE solver for the probability flow ODE
-      solution_x = integrate.solve_ivp(ode_func, (sde_x.T, eps, shape_x, False), to_flattened_numpy(x),
-                                       rtol=rtol, atol=atol, method=method)
-      solution_adj = integrate.solve_ivp(ode_func, (sde_adj.T, eps, shape_adj, True), to_flattened_numpy(adj),
-                                         rtol=rtol, atol=atol, method=method)
+      solution_x = integrate.solve_ivp(ode_func, (sde_x.T, eps), to_flattened_numpy(x),
+                                       rtol=rtol, atol=atol, method=method, args=(shape_x, False))
+      solution_adj = integrate.solve_ivp(ode_func, (sde_adj.T, eps), to_flattened_numpy(adj),
+                                         rtol=rtol, atol=atol, method=method, args=(shape_adj, True))
       nfe_x = solution_x.nfev
       nfe_adj = solution_adj.nfev
 
