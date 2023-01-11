@@ -327,12 +327,14 @@ def get_ode_sampler(sde_x, sde_adj, shape_x, shape_adj, predictor='None', correc
       bs = adj.shape[0]
 
       def ode_func_x(t, x, adj, shape):
+        shape[0] = bs
         x = from_flattened_numpy(x, shape).to(device).type(torch.float32)
         vec_t = torch.ones(bs, device=x.device) * t
         drift = drift_fn(model_x, x, adj, flags, vec_t, is_adj=False)
         return to_flattened_numpy(drift)
       
       def ode_func_adj(t, adj, x, shape):
+        shape[0] = bs
         adj = from_flattened_numpy(adj, shape).to(device).type(torch.float32)
         vec_t = torch.ones(bs, device=adj.device) * t
         drift = drift_fn(model_adj, x, adj, flags, vec_t, is_adj=True)
