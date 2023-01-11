@@ -327,29 +327,32 @@ def get_ode_sampler(sde_x, sde_adj, shape_x, shape_adj, predictor='None', correc
       bs = adj.shape[0]
 
       def ode_func_x(t, x, adj, shape):
-        shape[0] = bs
         x = from_flattened_numpy(x, shape).to(device).type(torch.float32)
         vec_t = torch.ones(bs, device=x.device) * t
         drift = drift_fn(model_x, x, adj, flags, vec_t, is_adj=False)
         return to_flattened_numpy(drift)
       
       def ode_func_adj(t, adj, x, shape):
-        shape[0] = bs
         adj = from_flattened_numpy(adj, shape).to(device).type(torch.float32)
         vec_t = torch.ones(bs, device=adj.device) * t
         drift = drift_fn(model_adj, x, adj, flags, vec_t, is_adj=True)
         return to_flattened_numpy(drift)
       
+      shape_x_new = list(shape_x)
+      shape_x_new[0] = bs
+      shape_adj_new = list(shape_adj)
+      shape_adj_new[0] = bs
+      
       # Black-box ODE solver for the probability flow ODE
       solution_x = integrate.solve_ivp(ode_func_x, (sde_x.T, eps), to_flattened_numpy(x),
-                                       rtol=rtol, atol=atol, method=method, args=(adj, shape_x))
+                                       rtol=rtol, atol=atol, method=method, args=(adj, shape_x_new))
       solution_adj = integrate.solve_ivp(ode_func_adj, (sde_adj.T, eps), to_flattened_numpy(adj),
-                                         rtol=rtol, atol=atol, method=method, args=(x, shape_adj))
+                                         rtol=rtol, atol=atol, method=method, args=(x, shape_adj_new))
       nfe_x = solution_x.nfev
       nfe_adj = solution_adj.nfev
 
-      x = torch.tensor(solution_x.y[:, -1]).reshape(shape_x).to(device).type(torch.float32)
-      adj = torch.tensor(solution_adj.y[:, -1]).reshape(shape_adj).to(device).type(torch.float32)
+      x = torch.tensor(solution_x.y[:, -1]).reshape(shape_x_new).to(device).type(torch.float32)
+      adj = torch.tensor(solution_adj.y[:, -1]).reshape(shape_adj_new).to(device).type(torch.float32)
       return x, adj, nfe_adj
     
 
