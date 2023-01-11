@@ -326,20 +326,23 @@ def get_ode_sampler(sde_x, sde_adj, shape_x, shape_adj, predictor='None', correc
 
       bs = adj.shape[0]
 
-      def ode_func(t, x, shape, is_adj):
+      def ode_func_x(t, x, adj, shape):
         x = from_flattened_numpy(x, shape).to(device).type(torch.float32)
         vec_t = torch.ones(bs, device=x.device) * t
-        if is_adj:
-          drift = drift_fn(model_adj, x, adj, flags, vec_t, is_adj)
-        else:
-          drift = drift_fn(model_x, x, adj, flags, vec_t, is_adj)
+        drift = drift_fn(model_x, x, adj, flags, vec_t, is_adj=False)
+        return to_flattened_numpy(drift)
+      
+      def ode_func_adj(t, adj, x, shape):
+        adj = from_flattened_numpy(adj, shape).to(device).type(torch.float32)
+        vec_t = torch.ones(bs, device=adj.device) * t
+        drift = drift_fn(model_adj, x, adj, flags, vec_t, is_adj=True)
         return to_flattened_numpy(drift)
       
       # Black-box ODE solver for the probability flow ODE
-      solution_x = integrate.solve_ivp(ode_func, (sde_x.T, eps), to_flattened_numpy(x),
-                                       rtol=rtol, atol=atol, method=method, args=(shape_x, False))
-      solution_adj = integrate.solve_ivp(ode_func, (sde_adj.T, eps), to_flattened_numpy(adj),
-                                         rtol=rtol, atol=atol, method=method, args=(shape_adj, True))
+      solution_x = integrate.solve_ivp(ode_func_x, (sde_x.T, eps), to_flattened_numpy(x),
+                                       rtol=rtol, atol=atol, method=method, args=(adj, shape_x))
+      solution_adj = integrate.solve_ivp(ode_func_adj, (sde_adj.T, eps), to_flattened_numpy(adj),
+                                         rtol=rtol, atol=atol, method=method, args=(x, shape_adj))
       nfe_x = solution_x.nfev
       nfe_adj = solution_adj.nfev
 
