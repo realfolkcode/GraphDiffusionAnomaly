@@ -46,7 +46,7 @@ class Reconstructor(torch.nn.Module):
         perturbed_x = mean_x + std_x[:, None, None] * z_x
         perturbed_x = mask_x(perturbed_x, flags)
 
-        z_adj = gen_noise(adj, flags, sym=True) 
+        z_adj = gen_noise(adj, flags, sym=self.sde_adj.sym) 
         mean_adj, std_adj = self.sde_adj.marginal_prob(adj, t)
         perturbed_adj = mean_adj + std_adj[:, None, None] * z_adj
         perturbed_adj = mask_adjs(perturbed_adj, flags)

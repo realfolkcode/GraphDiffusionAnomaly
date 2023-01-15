@@ -6,7 +6,7 @@ import numpy as np
 class SDE(abc.ABC):
   """SDE abstract class. Functions are designed for a mini-batch of inputs."""
 
-  def __init__(self, N, endtime):
+  def __init__(self, N, endtime, sym=False):
     """Construct an SDE.
     Args:
       N: number of discretization time steps.
@@ -14,6 +14,7 @@ class SDE(abc.ABC):
     super().__init__()
     self.N = N
     self.endtime = endtime
+    self.sym = sym
 
   @property
   @abc.abstractmethod

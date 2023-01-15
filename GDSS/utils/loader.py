@@ -94,13 +94,14 @@ def load_sde(config_sde):
     beta_max = config_sde.beta_max
     num_scales = config_sde.num_scales
     endtime = config_sde.endtime
+    sym = config_sde.sym
 
     if sde_type == 'VP':
-        sde = VPSDE(beta_min=beta_min, beta_max=beta_max, N=num_scales, endtime=endtime)
+        sde = VPSDE(beta_min=beta_min, beta_max=beta_max, N=num_scales, endtime=endtime, sym=sym)
     elif sde_type == 'VE':
-        sde = VESDE(sigma_min=beta_min, sigma_max=beta_max, N=num_scales, endtime=endtime)
+        sde = VESDE(sigma_min=beta_min, sigma_max=beta_max, N=num_scales, endtime=endtime, sym=sym)
     elif sde_type == 'subVP':
-        sde = subVPSDE(beta_min=beta_min, beta_max=beta_max, N=num_scales, endtime=endtime)
+        sde = subVPSDE(beta_min=beta_min, beta_max=beta_max, N=num_scales, endtime=endtime, sym=sym)
     else:
         raise NotImplementedError(f"SDE class {sde_type} not yet supported.")
     return sde

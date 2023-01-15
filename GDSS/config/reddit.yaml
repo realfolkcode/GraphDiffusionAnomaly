@@ -14,12 +14,14 @@ sde:
     beta_max: 1.0
     num_scales: 1000
     endtime: 1
+    sym: False
   adj: 
     type: VP
     beta_min: 0.1
     beta_max: 1.0
     num_scales: 1000
     endtime: 1
+    sym: True
 
 model:
   x: ScoreNetworkX
