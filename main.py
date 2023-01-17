@@ -4,9 +4,9 @@ import torch_geometric
 import numpy as np
 import argparse
 
-from GDSS.parsers.config import get_config
-from GDSS.trainer import Trainer
-from GDSS.utils.data_loader import dataloader
+from GSDM.parsers.config import get_config
+from GSDM.trainer import Trainer
+from GSDM.utils.data_loader import dataloader
 
 from data import AnomalyDataset
 from anomaly_scores import calculate_scores
