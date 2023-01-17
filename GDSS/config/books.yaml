@@ -21,7 +21,7 @@ sde:
     beta_max: 1.0
     num_scales: 1000
     endtime: 1
-    sym: False
+    sym: True
 
 model:
   x: ScoreNetworkX

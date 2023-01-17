@@ -16,9 +16,9 @@ class AnomalyDataset(DGLDataset):
     def process(self):
         data = load_data(self.name)
 
-        #if not is_undirected(data['edge_index']):
-        #    data = ToUndirected()(data)
-        #assert is_undirected(data['edge_index'])
+        if not is_undirected(data['edge_index']):
+            data = ToUndirected()(data)
+        assert is_undirected(data['edge_index'])
 
         data['x'] = standardize(data['x'])
 
