@@ -58,25 +58,27 @@ class Trainer(object):
 
                 self.optimizer_x.zero_grad()
                 self.optimizer_adj.zero_grad()
-                x, adj, eigenvals, eigenvecs = load_batch(train_b, self.device) 
+                x, adj, eigenvals, eigenvecs = load_batch(train_b, self.device)
+                # Consider eigenvals as a feature vector
+                x = torch.stack((x, eigenvals), dim=-1)
                 loss_subject = (x, adj)
 
                 loss_x, loss_adj = self.loss_fn(self.model_x, self.model_adj, *loss_subject)
                 loss_x.backward()
-                loss_adj.backward()
+                #loss_adj.backward()
 
                 torch.nn.utils.clip_grad_norm_(self.model_x.parameters(), self.config.train.grad_norm)
                 torch.nn.utils.clip_grad_norm_(self.model_adj.parameters(), self.config.train.grad_norm)
 
                 self.optimizer_x.step()
-                self.optimizer_adj.step()
+                #self.optimizer_adj.step()
 
                 # -------- EMA update --------
                 self.ema_x.update(self.model_x.parameters())
                 self.ema_adj.update(self.model_adj.parameters())
 
                 self.train_x.append(loss_x.item())
-                self.train_adj.append(loss_adj.item())
+                #self.train_adj.append(loss_adj.item())
 
             if self.config.train.lr_schedule:
                 self.scheduler_x.step()

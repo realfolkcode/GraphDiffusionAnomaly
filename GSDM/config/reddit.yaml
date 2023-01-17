@@ -24,7 +24,7 @@ sde:
     sym: True
 
 model:
-  x: ScoreNetworkX
+  x: ScoreNetworkX_GMH
   adj: ScoreNetworkA
   conv: GCN
   num_heads: 4

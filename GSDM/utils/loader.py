@@ -153,7 +153,9 @@ def load_sampling_fn(config_train, config_module, config_sample, device):
 
 def load_model_params(config):
     config_m = config.model
-    max_feat_num = config.data.max_feat_num
+    
+    # Increment number of features by 1 since we consider spectrum as a feature vector
+    max_feat_num = config.data.max_feat_num + 1
 
     if 'GMH' in config_m.x:
         params_x = {'model_type': config_m.x, 'max_feat_num': max_feat_num, 'depth': config_m.depth, 
