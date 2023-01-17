@@ -57,8 +57,12 @@ def get_sde_loss_fn(sde_x, sde_adj, train=True, reduce_mean=False, continuous=Tr
     perturbed_adj = mean_adj + std_adj[:, None, None] * z_adj
     perturbed_adj = mask_adjs(perturbed_adj, flags)
 
-    score_x = score_fn_x(perturbed_x, perturbed_adj, flags, t)
-    score_adj = score_fn_adj(perturbed_x, perturbed_adj, flags, t)
+    # Make complete adjacency matrix for learning on sets
+    complete_adj = torch.ones(adj.shape)
+    complete_adj = mask_adjs(complete_adj, flags)
+
+    score_x = score_fn_x(perturbed_x, complete_adj, flags, t)
+    score_adj = score_fn_adj(perturbed_x, complete_adj, flags, t)
 
     if not likelihood_weighting:
       losses_x = torch.square(score_x * std_x[:, None, None] + z_x)

@@ -96,7 +96,8 @@ def load_sde(config_sde):
     beta_max = config_sde.beta_max
     num_scales = config_sde.num_scales
     endtime = config_sde.endtime
-    sym = config_sde.sym
+    # For GSDM, noise is always asymmetric
+    sym = False
 
     if sde_type == 'VP':
         sde = VPSDE(beta_min=beta_min, beta_max=beta_max, N=num_scales, endtime=endtime, sym=sym)
