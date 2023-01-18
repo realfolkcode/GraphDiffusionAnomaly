@@ -193,13 +193,13 @@ def get_pc_sampler(sde_x, sde_adj, shape_x, shape_adj, predictor='Euler', correc
 
         _x = x
         x, x_mean = corrector_obj_x.update_fn(x, adj, flags, vec_t)
-        adj, adj_mean = corrector_obj_adj.update_fn(_x, adj, flags, vec_t)
+        #adj, adj_mean = corrector_obj_adj.update_fn(_x, adj, flags, vec_t)
 
         _x = x
         x, x_mean = predictor_obj_x.update_fn(x, adj, flags, vec_t)
-        adj, adj_mean = predictor_obj_adj.update_fn(_x, adj, flags, vec_t)
+        #adj, adj_mean = predictor_obj_adj.update_fn(_x, adj, flags, vec_t)
       print(' ')
-      return (x_mean if denoise else x), (adj_mean if denoise else adj), diff_steps * (n_steps + 1)
+      return (x_mean if denoise else x), (adj if denoise else adj), diff_steps * (n_steps + 1)
   return pc_sampler
 
 

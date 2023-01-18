@@ -52,8 +52,8 @@ train:
   eps: 1.0e-5
 
 sampler:
-  predictor: S4
-  corrector: None
+  predictor: Euler
+  corrector: Langevin
   snr: 0.15
   scale_eps: 0.7
   n_steps: 1
