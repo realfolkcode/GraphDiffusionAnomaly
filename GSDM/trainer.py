@@ -82,7 +82,7 @@ class Trainer(object):
 
             if self.config.train.lr_schedule:
                 self.scheduler_x.step()
-                self.scheduler_adj.step()
+                #self.scheduler_adj.step()
 
             self.model_x.eval()
             self.model_adj.eval()

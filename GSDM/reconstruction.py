@@ -55,10 +55,17 @@ class Reconstructor(torch.nn.Module):
         
     
     def forward(self, batch):
-        x, adj, eigenvals, eigenvecs = load_batch(batch, self.device) 
+        x, adj, eigenvals, eigenvecs = load_batch(batch, self.device)
+        # Consider eigenvals as a feature vector
+        x = torch.cat((x, eigenvals.unsqueeze(2)), dim=-1)
         perturbed_x, perturbed_adj, flags = self.perturb(x, adj)
+        # Make complete adjacency matrix for learning on sets
+        complete_adj = torch.ones(adj.shape).to(adj.device)
+        complete_adj = mask_adjs(complete_adj, flags)
         x, adj, _ = self.sampling_fn(self.model_x, self.model_adj, flags,
-                                     x=perturbed_x, adj=perturbed_adj)
+                                     x=perturbed_x, adj=complete_adj)
+        eigenvals = x[:, :, -1].squeeze()
+        adj = eigenvecs @ torch.diag_embed(eigenvals) @ eigenvecs.mH
         adj = quantize(adj)
         return x, adj
         

@@ -24,6 +24,8 @@ def calculate_scores(config, dataset, exp_name):
     for i, batch in tqdm(enumerate(loader)):
         x = batch[0]
         adj = batch[1]
+        eigenvals = batch[2]
+        eigenvecs = batch[3]
 
         with torch.no_grad():
             x_reconstructed, adj_reconstructed = reconstructor(batch)
