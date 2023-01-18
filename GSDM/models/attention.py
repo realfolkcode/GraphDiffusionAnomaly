@@ -71,6 +71,7 @@ class Attention(torch.nn.Module):
             gnn_q = torch.nn.Linear(in_dim, attn_dim)
             gnn_k = torch.nn.Linear(in_dim, attn_dim)
             gnn_v = torch.nn.Linear(in_dim, out_dim)
+            return gnn_q, gnn_k, gnn_v
 
         else:
             raise NotImplementedError(f'{conv} not implemented.')
