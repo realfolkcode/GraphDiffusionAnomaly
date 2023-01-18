@@ -2,10 +2,10 @@ import torch
 import numpy as np
 from tqdm import tqdm
 
-from GDSS.utils.data_loader import dataloader
-from GDSS.utils.graph_utils import adjs_to_graphs
-from GDSS.utils.plot import plot_graphs_list
-from GDSS.reconstruction import Reconstructor
+from GSDM.utils.data_loader import dataloader
+from GSDM.utils.graph_utils import adjs_to_graphs
+from GSDM.utils.plot import plot_graphs_list
+from GSDM.reconstruction import Reconstructor
 
 
 def calculate_scores(config, dataset, exp_name):
@@ -24,8 +24,6 @@ def calculate_scores(config, dataset, exp_name):
     for i, batch in tqdm(enumerate(loader)):
         x = batch[0]
         adj = batch[1]
-        eigenvals = batch[2]
-        eigenvecs = batch[3]
 
         with torch.no_grad():
             x_reconstructed, adj_reconstructed = reconstructor(batch)
