@@ -31,7 +31,11 @@ class Attention(torch.nn.Module):
             Q = self.gnn_q(x) 
             K = self.gnn_k(x)
 
-        V = self.gnn_v(x, adj) 
+        if self.conv == 'vanilla':
+            V = self.gnn_v(x)
+        else:
+            V = self.gnn_v(x, adj) 
+        
         dim_split = self.attn_dim // self.num_heads
         Q_ = torch.cat(Q.split(dim_split, 2), 0)
         K_ = torch.cat(K.split(dim_split, 2), 0)
