@@ -65,6 +65,7 @@ class Reconstructor(torch.nn.Module):
         x, adj, _ = self.sampling_fn(self.model_x, self.model_adj, flags,
                                      x=perturbed_x, adj=complete_adj)
         eigenvals = x[:, :, -1].squeeze()
+        x = x[:, :, :-1]
         adj = eigenvecs @ torch.diag_embed(eigenvals) @ eigenvecs.mH
         adj = quantize(adj)
         return x, adj
