@@ -48,7 +48,7 @@ class ScoreNetworkX(torch.nn.Module):
 
 class ScoreNetworkX_GMH(torch.nn.Module):
     def __init__(self, max_feat_num, depth, nhid, num_linears,
-                 c_init, c_hid, c_final, adim, num_heads=4, conv='GCN'):
+                 c_init, c_hid, c_final, adim, num_heads=4, conv='vanilla'):
         super().__init__()
 
         self.depth = depth

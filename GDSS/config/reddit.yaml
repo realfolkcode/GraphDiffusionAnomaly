@@ -26,7 +26,7 @@ sde:
 model:
   x: ScoreNetworkX
   adj: ScoreNetworkA
-  conv: GCN
+  conv: vanilla
   num_heads: 4
   depth: 2
   adim: 32
