@@ -62,7 +62,7 @@ class Reconstructor(torch.nn.Module):
         perturbed_x, perturbed_adj, flags = self.perturb(x, adj)
         # Make complete adjacency matrix for learning on sets
         complete_adj = torch.ones(adj.shape).to(adj.device)
-        complete_adj -= torch.diag_embed(torch.ones(adj.shape[:2]))
+        complete_adj -= torch.diag_embed(torch.ones(adj.shape[:2])).to(adj.device)
         complete_adj = mask_adjs(complete_adj, flags)
         x, adj, _ = self.sampling_fn(self.model_x, self.model_adj, flags,
                                      x=perturbed_x, adj=complete_adj)
