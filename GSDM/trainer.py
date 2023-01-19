@@ -66,13 +66,13 @@ class Trainer(object):
 
                 loss_x, loss_adj = self.loss_fn(self.model_x, self.model_adj, *loss_subject)
                 loss_x.backward()
-                #loss_adj.backward()
+                loss_adj.backward()
 
                 torch.nn.utils.clip_grad_norm_(self.model_x.parameters(), self.config.train.grad_norm)
                 torch.nn.utils.clip_grad_norm_(self.model_adj.parameters(), self.config.train.grad_norm)
 
                 self.optimizer_x.step()
-                #self.optimizer_adj.step()
+                self.optimizer_adj.step()
 
                 # -------- EMA update --------
                 self.ema_x.update(self.model_x.parameters())
@@ -83,7 +83,7 @@ class Trainer(object):
 
             if self.config.train.lr_schedule:
                 self.scheduler_x.step()
-                #self.scheduler_adj.step()
+                self.scheduler_adj.step()
 
             self.model_x.eval()
             self.model_adj.eval()
