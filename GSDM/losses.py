@@ -67,6 +67,7 @@ def get_sde_loss_fn(sde_x, sde_adj, train=True, reduce_mean=False, continuous=Tr
 
     if not likelihood_weighting:
       losses_x = torch.square(score_x * std_x[:, None, None] + z_x)
+      losses_x[:, :, :-1] /= (score_x.shape[1] - 1)
       losses_x = reduce_op(losses_x.reshape(losses_x.shape[0], -1), dim=-1)
 
       losses_adj = torch.square(score_x * std_x[:, None, None] + z_x)[:, :, -1]
@@ -75,6 +76,7 @@ def get_sde_loss_fn(sde_x, sde_adj, train=True, reduce_mean=False, continuous=Tr
     else:
       g2_x = sde_x.sde(torch.zeros_like(x), t)[1] ** 2
       losses_x = torch.square(score_x + z_x / std_x[:, None, None])
+      losses_x[:, :, :-1] /= (score_x.shape[1] - 1)
       losses_x = reduce_op(losses_x.reshape(losses_x.shape[0], -1), dim=-1) * g2_x
 
       g2_adj = sde_adj.sde(torch.zeros_like(adj), t)[1] ** 2
