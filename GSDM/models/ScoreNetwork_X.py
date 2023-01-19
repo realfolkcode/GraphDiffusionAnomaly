@@ -47,8 +47,8 @@ class ScoreNetworkX(torch.nn.Module):
 
 
 class ScoreNetworkX_GMH(torch.nn.Module):
-    def __init__(self, max_feat_num, depth, nhid, num_linears,
-                 c_init, c_hid, c_final, adim, num_heads=4, conv='vanilla', is_eig=False):
+    def __init__(self, max_feat_num, cond_dim, depth, nhid, num_linears,
+                 c_init, c_hid, c_final, adim, num_heads=4, conv='vanilla'):
         super().__init__()
 
         self.depth = depth
@@ -67,18 +67,13 @@ class ScoreNetworkX_GMH(torch.nn.Module):
                                                   c_hid, num_heads, conv))
 
         fdim = max_feat_num + depth * nhid
-        if is_eig:
-            out_dim = 1
-        else:
-            out_dim = max_feat_num - 1
-        self.final = MLP(num_layers=3, input_dim=fdim, hidden_dim=2*fdim, output_dim=out_dim, 
+        self.final = MLP(num_layers=3, input_dim=fdim, hidden_dim=2*fdim, output_dim=max_feat_num, 
                          use_bn=False, activate_func=F.elu)
 
         self.activation = torch.tanh
 
-    def forward(self, x, adj, flags):
-        adjc = pow_tensor(adj, self.c_init)
-
+    def forward(self, x, cond, flags):
+        out_shape = (x.shape[0], x.shape[1], -1)
         x_list = [x]
         for _ in range(self.depth):
             x, adjc = self.layers[_](x, adjc, flags)
@@ -86,7 +81,6 @@ class ScoreNetworkX_GMH(torch.nn.Module):
             x_list.append(x)
 
         xs = torch.cat(x_list, dim=-1) # B x N x (F + num_layers x H)
-        out_shape = (adj.shape[0], adj.shape[1], -1)
         x = self.final(xs).view(*out_shape)
         x = mask_x(x, flags)
 

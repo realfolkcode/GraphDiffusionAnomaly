@@ -59,10 +59,8 @@ class Trainer(object):
                 self.optimizer_x.zero_grad()
                 self.optimizer_adj.zero_grad()
                 x, adj, eigenvals, eigenvecs = load_batch(train_b, self.device)
-                # Consider eigenvals as a feature vector
                 eigenvals /= x.shape[1]
-                x = torch.cat((x, eigenvals.unsqueeze(2)), dim=-1)
-                loss_subject = (x, adj)
+                loss_subject = (x, eigenvals)
 
                 loss_x, loss_adj = self.loss_fn(self.model_x, self.model_adj, *loss_subject)
                 loss_x.backward()

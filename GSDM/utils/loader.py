@@ -153,21 +153,19 @@ def load_sampling_fn(config_train, config_module, config_sample, device):
 
 def load_model_params(config):
     config_m = config.model
-    
-    # Increment number of features by 1 since we consider spectrum as a feature vector
-    max_feat_num = config.data.max_feat_num + 1
+    max_feat_num = config.data.max_feat_num 
 
     if 'GMH' in config_m.x:
-        params_x = {'model_type': config_m.x, 'max_feat_num': max_feat_num, 'depth': config_m.depth, 
+        params_x = {'model_type': config_m.x, 'max_feat_num': max_feat_num, 'cond_dim': 1, 'depth': config_m.depth, 
                     'nhid': config_m.nhid, 'num_linears': config_m.num_linears,
                     'c_init': config_m.c_init, 'c_hid': config_m.c_hid, 'c_final': config_m.c_final, 
                     'adim': config_m.adim, 'num_heads': config_m.num_heads, 'conv':config_m.conv}
     else:
         params_x = {'model_type':config_m.x, 'max_feat_num':max_feat_num, 'depth':config_m.depth, 'nhid':config_m.nhid}
-    params_adj = {'model_type': config_m.x, 'max_feat_num': max_feat_num, 'depth': config_m.depth, 
+    params_adj = {'model_type': config_m.x, 'max_feat_num': 1, 'cond_dim': max_feat_num, 'depth': config_m.depth, 
                 'nhid': config_m.nhid, 'num_linears': config_m.num_linears,
                 'c_init': config_m.c_init, 'c_hid': config_m.c_hid, 'c_final': config_m.c_final, 
-                'adim': config_m.adim, 'num_heads': config_m.num_heads, 'conv':config_m.conv, 'is_eig':True}
+                'adim': config_m.adim, 'num_heads': config_m.num_heads, 'conv':config_m.conv}
     return params_x, params_adj
 
 

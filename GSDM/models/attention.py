@@ -11,30 +11,22 @@ from ..utils.graph_utils import mask_adjs, mask_x
 # -------- From Baek et al. (2021) --------
 class Attention(torch.nn.Module):
 
-    def __init__(self, in_dim, attn_dim, out_dim, num_heads=4, conv='GCN'):
+    def __init__(self, in_dim, cond_dim, attn_dim, out_dim, num_heads=4, conv='GCN'):
         super(Attention, self).__init__()
         self.num_heads = num_heads
         self.attn_dim = attn_dim
         self.out_dim = out_dim
         self.conv = conv
 
-        self.gnn_q, self.gnn_k, self.gnn_v = self.get_gnn(in_dim, attn_dim, out_dim, conv)
+        self.gnn_q, self.gnn_k, self.gnn_v = self.get_gnn(in_dim, cond_dim, attn_dim, out_dim, conv)
         self.activation = torch.tanh 
         self.softmax_dim = 2
 
-    def forward(self, x, adj, flags, attention_mask=None):
+    def forward(self, x, cond, flags, attention_mask=None):
 
-        if self.conv == 'GCN':
-            Q = self.gnn_q(x, adj) 
-            K = self.gnn_k(x, adj) 
-        else:
-            Q = self.gnn_q(x) 
-            K = self.gnn_k(x)
-
-        if self.conv == 'vanilla':
-            V = self.gnn_v(x)
-        else:
-            V = self.gnn_v(x, adj) 
+        Q = self.gnn_q(x) 
+        K = self.gnn_k(cond)
+        V = self.gnn_v(cond)
         
         dim_split = self.attn_dim // self.num_heads
         Q_ = torch.cat(Q.split(dim_split, 2), 0)
@@ -54,24 +46,9 @@ class Attention(torch.nn.Module):
 
         return V, A 
 
-    def get_gnn(self, in_dim, attn_dim, out_dim, conv='GCN'):
+    def get_gnn(self, in_dim, cond_dim, attn_dim, out_dim, conv='GCN'):
 
-        if conv == 'GCN':
-            gnn_q = DenseGCNConv(in_dim, attn_dim)
-            gnn_k = DenseGCNConv(in_dim, attn_dim)
-            gnn_v = DenseGCNConv(in_dim, out_dim)
-
-            return gnn_q, gnn_k, gnn_v
-
-        elif conv == 'MLP':
-            num_layers=2
-            gnn_q = MLP(num_layers, in_dim, 2*attn_dim, attn_dim, activate_func=torch.tanh)
-            gnn_k = MLP(num_layers, in_dim, 2*attn_dim, attn_dim, activate_func=torch.tanh)
-            gnn_v = DenseGCNConv(in_dim, out_dim)
-
-            return gnn_q, gnn_k, gnn_v
-        
-        elif conv == 'vanilla':
+        if conv == 'vanilla':
             gnn_q = torch.nn.Linear(in_dim, attn_dim)
             gnn_k = torch.nn.Linear(in_dim, attn_dim)
             gnn_v = torch.nn.Linear(in_dim, out_dim)
@@ -84,7 +61,7 @@ class Attention(torch.nn.Module):
 # -------- Layer of ScoreNetworkA --------
 class AttentionLayer(torch.nn.Module):
 
-    def __init__(self, num_linears, conv_input_dim, attn_dim, conv_output_dim, input_dim, output_dim, 
+    def __init__(self, num_linears, conv_input_dim, cond_dim, attn_dim, conv_output_dim, input_dim, output_dim, 
                     num_heads=4, conv='GCN'):
 
         super(AttentionLayer, self).__init__()
@@ -92,7 +69,7 @@ class AttentionLayer(torch.nn.Module):
         self.attn = torch.nn.ModuleList()
         for _ in range(input_dim):
             self.attn_dim =  attn_dim 
-            self.attn.append(Attention(conv_input_dim, self.attn_dim, conv_output_dim,
+            self.attn.append(Attention(conv_input_dim, cond_dim, self.attn_dim, conv_output_dim,
                                         num_heads=num_heads, conv=conv))
 
         self.hidden_dim = 2*max(input_dim, output_dim)
@@ -100,12 +77,12 @@ class AttentionLayer(torch.nn.Module):
         self.multi_channel = MLP(2, input_dim*conv_output_dim, self.hidden_dim, conv_output_dim, 
                                     use_bn=False, activate_func=F.elu)
 
-    def forward(self, x, adj, flags):
+    def forward(self, x, cond, flags):
         """
 
         :param x:  B x N x F_i
-        :param adj: B x C_i x N x N
-        :return: x_out: B x N x F_o, adj_out: B x C_o x N x N
+        :param cond: B x N x F_cond
+        :return: x_out: B x N x F_o
         """
         mask_list = []
         x_list = []
