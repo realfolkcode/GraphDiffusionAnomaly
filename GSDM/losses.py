@@ -69,7 +69,7 @@ def get_sde_loss_fn(sde_x, sde_adj, train=True, reduce_mean=False, continuous=Tr
       losses_x = torch.square(score_x * std_x[:, None, None] + z_x)
       losses_x = reduce_op(losses_x.reshape(losses_x.shape[0], -1), dim=-1)
 
-      losses_adj = torch.square(score_adj * std_adj[:, None, None] + z_adj)
+      losses_adj = torch.square(score_x * std_x[:, None, None] + z_x)[:, :, -1]
       losses_adj = reduce_op(losses_adj.reshape(losses_adj.shape[0], -1), dim=-1)
 
     else:
@@ -78,8 +78,8 @@ def get_sde_loss_fn(sde_x, sde_adj, train=True, reduce_mean=False, continuous=Tr
       losses_x = reduce_op(losses_x.reshape(losses_x.shape[0], -1), dim=-1) * g2_x
 
       g2_adj = sde_adj.sde(torch.zeros_like(adj), t)[1] ** 2
-      losses_adj = torch.square(score_adj + z_adj / std_adj[:, None, None])
-      losses_adj = reduce_op(losses_adj.reshape(losses_adj.shape[0], -1), dim=-1) * g2_adj
+      losses_adj = torch.square(score_x + z_x / std_x[:, None, None])[:, :, -1]
+      losses_adj = reduce_op(losses_adj.reshape(losses_adj.shape[0], -1), dim=-1) * g2_x
 
     return torch.mean(losses_x), torch.mean(losses_adj)
 

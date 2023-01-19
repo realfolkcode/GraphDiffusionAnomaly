@@ -79,7 +79,7 @@ class Trainer(object):
                 self.ema_adj.update(self.model_adj.parameters())
 
                 self.train_x.append(loss_x.item())
-                #self.train_adj.append(loss_adj.item())
+                self.train_adj.append(loss_adj.item())
 
             if self.config.train.lr_schedule:
                 self.scheduler_x.step()
