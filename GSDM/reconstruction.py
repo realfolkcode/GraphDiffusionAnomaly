@@ -56,7 +56,7 @@ class Reconstructor(torch.nn.Module):
     def forward(self, batch):
         x, adj, eigenvals, eigenvecs = load_batch(batch, self.device)
         flags = node_flags(adj)
-        perturbed_x, perturbed_adj, flags = self.perturb(x, adj)
+        perturbed_x, perturbed_adj, flags = self.perturb(x, adj, flags)
         x, eigenvals, _ = self.sampling_fn(self.model_x, self.model_adj, flags,
                                      x=perturbed_x, adj=perturbed_adj)
         eigenvals *= x.shape[1]
