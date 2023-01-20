@@ -52,33 +52,28 @@ def get_sde_loss_fn(sde_x, sde_adj, train=True, reduce_mean=False, continuous=Tr
     perturbed_x = mean_x + std_x[:, None, None] * z_x
     perturbed_x = mask_x(perturbed_x, flags)
 
-    #z_adj = gen_noise(adj, flags, sym=False) 
-    #mean_adj, std_adj = sde_adj.marginal_prob(adj, t)
-    #perturbed_adj = mean_adj + std_adj[:, None, None] * z_adj
-    #perturbed_adj = mask_x(perturbed_adj, flags)
+    z_adj = gen_noise(adj, flags, sym=False) 
+    mean_adj, std_adj = sde_adj.marginal_prob(adj, t)
+    perturbed_adj = mean_adj + std_adj[:, None, None] * z_adj
+    perturbed_adj = mask_x(perturbed_adj, flags)
 
-    # Make complete adjacency matrix for learning on sets
-    complete_adj = torch.ones(adj.shape).to(adj.device)
-    complete_adj -= torch.diag_embed(torch.ones(adj.shape[:2])).to(adj.device)
-    complete_adj = mask_adjs(complete_adj, flags)
-
-    score_x = score_fn_x(perturbed_x, complete_adj, flags, t)
-    score_adj = score_fn_adj(perturbed_x, complete_adj, flags, t)
+    score_x = score_fn_x(perturbed_x, perturbed_adj, flags, t)
+    score_adj = score_fn_adj(perturbed_adj, perturbed_x, flags, t)
 
     if not likelihood_weighting:
-      losses_x = torch.square(score_x * std_x[:, None, None] + z_x[:, :, :-1])
+      losses_x = torch.square(score_x * std_x[:, None, None] + z_x)
       losses_x = reduce_op(losses_x.reshape(losses_x.shape[0], -1), dim=-1)
 
-      losses_adj = torch.square(score_adj * std_x[:, None, None] + z_x[:, :, -1])
+      losses_adj = torch.square(score_adj * std_adj[:, None, None] + z_adj)
       losses_adj = reduce_op(losses_adj.reshape(losses_adj.shape[0], -1), dim=-1)
 
     else:
       g2_x = sde_x.sde(torch.zeros_like(x), t)[1] ** 2
-      losses_x = torch.square(score_x + z_x[:, :, :-1] / std_x[:, None, None])
+      losses_x = torch.square(score_x + z_x / std_x[:, None, None])
       losses_x = reduce_op(losses_x.reshape(losses_x.shape[0], -1), dim=-1) * g2_x
 
       g2_adj = sde_adj.sde(torch.zeros_like(adj), t)[1] ** 2
-      losses_adj = torch.square(score_adj + z_x[:, :, -1] / std_x[:, None, None])
+      losses_adj = torch.square(score_adj + z_adj / std_adj[:, None, None])
       losses_adj = reduce_op(losses_adj.reshape(losses_adj.shape[0], -1), dim=-1) * g2_adj
 
     return torch.mean(losses_x), torch.mean(losses_adj)
