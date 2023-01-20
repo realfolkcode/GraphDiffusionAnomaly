@@ -39,13 +39,12 @@ def get_sde_loss_fn(sde_x, sde_adj, train=True, reduce_mean=False, continuous=Tr
   
   reduce_op = torch.mean if reduce_mean else lambda *args, **kwargs: 0.5 * torch.sum(*args, **kwargs)
 
-  def loss_fn(model_x, model_adj, x, adj):
+  def loss_fn(model_x, model_adj, x, adj, flags):
 
     score_fn_x = get_score_fn(sde_x, model_x, train=train, continuous=continuous)
     score_fn_adj = get_score_fn(sde_adj, model_adj, train=train, continuous=continuous)
 
     t = torch.rand(adj.shape[0], device=adj.device) * (sde_adj.T - eps) + eps
-    flags = node_flags(adj)
 
     z_x = gen_noise(x, flags, sym=False)
     mean_x, std_x = sde_x.marginal_prob(x, t)

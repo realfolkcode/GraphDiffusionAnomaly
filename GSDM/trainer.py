@@ -7,6 +7,7 @@ import torch
 from .utils.loader import load_seed, load_device, load_data, load_model_params, load_model_optimizer, \
                          load_ema, load_loss_fn, load_batch
 from .utils.logger import Logger, set_log, start_log, train_log
+from .utils.graph_utils import node_flags
 
 
 class Trainer(object):
@@ -62,7 +63,8 @@ class Trainer(object):
                 eigenvals /= x.shape[1]
                 loss_subject = (x, eigenvals)
 
-                loss_x, loss_adj = self.loss_fn(self.model_x, self.model_adj, *loss_subject)
+                flags = node_flags(adj)
+                loss_x, loss_adj = self.loss_fn(self.model_x, self.model_adj, *loss_subject, flags)
                 loss_x.backward()
                 loss_adj.backward()
 
