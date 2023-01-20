@@ -37,9 +37,8 @@ class Reconstructor(torch.nn.Module):
         self.sde_adj = load_sde(config.sde.adj)
     
 
-    def perturb(self, x, adj):
+    def perturb(self, x, adj, flags):
         t = torch.ones(adj.shape[0], device=adj.device) * self.sde_adj.T
-        flags = node_flags(adj)
 
         z_x = gen_noise(x, flags, sym=False)
         mean_x, std_x = self.sde_x.marginal_prob(x, t)
@@ -49,25 +48,18 @@ class Reconstructor(torch.nn.Module):
         z_adj = gen_noise(adj, flags, sym=self.sde_adj.sym) 
         mean_adj, std_adj = self.sde_adj.marginal_prob(adj, t)
         perturbed_adj = mean_adj + std_adj[:, None, None] * z_adj
-        perturbed_adj = mask_adjs(perturbed_adj, flags)
+        perturbed_adj = mask_x(perturbed_adj, flags)
 
         return perturbed_x, perturbed_adj, flags
         
     
     def forward(self, batch):
         x, adj, eigenvals, eigenvecs = load_batch(batch, self.device)
-        # Consider eigenvals as a feature vector
-        eigenvals /= x.shape[1]
-        x = torch.cat((x, eigenvals.unsqueeze(2)), dim=-1)
+        flags = node_flags(adj)
         perturbed_x, perturbed_adj, flags = self.perturb(x, adj)
-        # Make complete adjacency matrix for learning on sets
-        complete_adj = torch.ones(adj.shape).to(adj.device)
-        complete_adj -= torch.diag_embed(torch.ones(adj.shape[:2])).to(adj.device)
-        complete_adj = mask_adjs(complete_adj, flags)
-        x, adj, _ = self.sampling_fn(self.model_x, self.model_adj, flags,
-                                     x=perturbed_x, adj=complete_adj)
-        eigenvals = x[:, :, -1].squeeze() * x.shape[1]
-        x = x[:, :, :-1]
+        x, eigenvals, _ = self.sampling_fn(self.model_x, self.model_adj, flags,
+                                     x=perturbed_x, adj=perturbed_adj)
+        eigenvals *= x.shape[1]
         adj = eigenvecs @ torch.diag_embed(eigenvals) @ eigenvecs.mH
         adj = quantize(adj)
         return x, adj
