@@ -45,7 +45,7 @@ class Reconstructor(torch.nn.Module):
         perturbed_x = mean_x + std_x[:, None, None] * z_x
         perturbed_x = mask_x(perturbed_x, flags)
 
-        z_adj = gen_noise(adj, flags, sym=self.sde_adj.sym) 
+        z_adj = gen_noise(adj, flags, sym=False) 
         mean_adj, std_adj = self.sde_adj.marginal_prob(adj, t)
         perturbed_adj = mean_adj + std_adj[:, None, None] * z_adj
         perturbed_adj = mask_x(perturbed_adj, flags)
@@ -55,6 +55,7 @@ class Reconstructor(torch.nn.Module):
     
     def forward(self, batch):
         x, adj, eigenvals, eigenvecs = load_batch(batch, self.device)
+        eigenvals /= x.shape[1]
         flags = node_flags(adj)
         perturbed_x, perturbed_adj, flags = self.perturb(x, adj, flags)
         x, eigenvals, _ = self.sampling_fn(self.model_x, self.model_adj, flags,

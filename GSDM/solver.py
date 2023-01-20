@@ -180,7 +180,7 @@ def get_pc_sampler(sde_x, sde_adj, shape_x, shape_adj, predictor='Euler', correc
           else:
               adj = sde_adj.prior_sampling(shape_adj).to(device)
           x = mask_x(x, flags)
-          adj = mask_adjs(adj, flags)
+          adj = mask_x(adj, flags)
       diff_steps = sde_adj.N
       timesteps = torch.linspace(sde_adj.T, eps, diff_steps, device=device)
 
