@@ -60,10 +60,10 @@ class ScoreNetworkX_GMH(torch.nn.Module):
                 self.layers.append(AttentionLayer(num_linears, max_feat_num, cond_dim, nhid, nhid, c_init, 
                                                   c_hid, num_heads, conv))
             elif _ == self.depth - 1:
-                self.layers.append(AttentionLayer(num_linears, nhid, adim, nhid, c_hid, 
+                self.layers.append(AttentionLayer(num_linears, nhid, cond_dim, adim, nhid, c_hid, 
                                                   c_final, num_heads, conv))
             else:
-                self.layers.append(AttentionLayer(num_linears, nhid, adim, nhid, c_hid, 
+                self.layers.append(AttentionLayer(num_linears, nhid, cond_dim, adim, nhid, c_hid, 
                                                   c_hid, num_heads, conv))
 
         fdim = max_feat_num + depth * nhid
