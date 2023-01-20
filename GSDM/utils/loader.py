@@ -85,7 +85,7 @@ def load_batch(batch, device):
     device_id = f'cuda:{device[0]}' if isinstance(device, list) else device
     x_b = batch[0].to(device_id)
     adj_b = batch[1].to(device_id)
-    eigenvals_b = batch[2].to(device_id)
+    eigenvals_b = batch[2].unsqueeze(-1).to(device_id)
     eigenvecs_b = batch[3].to(device_id)
     return x_b, adj_b, eigenvals_b, eigenvecs_b
 
