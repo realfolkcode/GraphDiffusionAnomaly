@@ -137,7 +137,7 @@ class LangevinCorrector(Corrector):
 
     elif self.obj == 'adj':
       for i in range(n_steps):
-        grad = score_fn(x, adj, flags, t)
+        grad = score_fn(adj, x, flags, t)
         noise = gen_noise(adj, flags, sym=self.sde.sym)
         grad_norm = torch.norm(grad.reshape(grad.shape[0], -1), dim=-1).mean()
         noise_norm = torch.norm(noise.reshape(noise.shape[0], -1), dim=-1).mean()

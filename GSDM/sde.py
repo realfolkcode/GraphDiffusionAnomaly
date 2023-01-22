@@ -87,7 +87,10 @@ class SDE(abc.ABC):
       def sde(self, feature, x, flags, t, is_adj=True):
         """Create the drift and diffusion functions for the reverse SDE/ODE."""
         drift, diffusion = sde_fn(x, t) if is_adj else sde_fn(feature, t)
-        score = score_fn(feature, x, flags, t)
+        if is_adj:
+            score = score_fn(x, feature, flags, t)
+        else:
+            score = score_fn(feature, x, flags, t)
         drift = drift - diffusion[:, None, None] ** 2 * score * (0.5 if self.probability_flow else 1.)
         # -------- Set the diffusion function to zero for ODEs. --------
         diffusion = torch.zeros_like(diffusion) if self.probability_flow else diffusion
@@ -96,7 +99,10 @@ class SDE(abc.ABC):
       def discretize(self, feature, x, flags, t, is_adj=True):
         """Create discretized iteration rules for the reverse diffusion sampler."""
         f, G = discretize_fn(x, t) if is_adj else discretize_fn(feature, t)
-        score = score_fn(feature, x, flags, t)
+        if is_adj:
+            score = score_fn(feature, x, flags, t)
+        else:
+            score = score_fn(x, feature, flags, t)
         rev_f = f - G[:, None, None] ** 2 * score * (0.5 if self.probability_flow else 1.)
         rev_G = torch.zeros_like(G) if self.probability_flow else G
         return rev_f, rev_G
