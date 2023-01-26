@@ -3,7 +3,7 @@ import numpy as np
 from tqdm import tqdm
 
 from GDSS.utils.data_loader import dataloader
-from GDSS.utils.graph_utils import adjs_to_graphs
+from GDSS.utils.graph_utils import adjs_to_graphs, count_nodes
 from GDSS.utils.plot import plot_graphs_list
 from GDSS.reconstruction import Reconstructor
 
@@ -30,11 +30,15 @@ def calculate_scores(config, dataset, exp_name):
         x_reconstructed = x_reconstructed.to('cpu')
         adj_reconstructed = adj_reconstructed.to('cpu')
 
+        # Normalization terms (number of nodes in each graph and number of features)
+        num_nodes = count_nodes(adj)
+        num_feat = x.shape[2]
+        
         x_err = torch.linalg.norm(x - x_reconstructed, dim=[1, 2])
-        x_err = x_err / (x.shape[1] * x.shape[2])
+        x_err = x_err / (num_nodes * num_feat)
 
         adj_err = torch.linalg.norm(adj - adj_reconstructed, dim=[1, 2])
-        adj_err = adj_err / (adj.shape[1] * adj.shape[2])
+        adj_err = adj_err / (num_nodes * num_feat)
 
         bs = x.shape[0]
         x_scores[i * bs:(i+1) * bs] = x_err
