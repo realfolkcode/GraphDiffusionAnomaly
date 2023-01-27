@@ -29,8 +29,8 @@ def calculate_scores(config, dataset, exp_name, num_sample):
         num_nodes = count_nodes(adj)
         num_feat = x.shape[2]
 
-        x_err = torch.zeros(x.shape[0], x.shape[1])
-        adj_err = torch.zeros(adj.shape[0], adj.shape[1])
+        x_err = torch.zeros(x.shape[0])
+        adj_err = torch.zeros(adj.shape[0])
 
         for _ in range(num_sample):
             with torch.no_grad():
