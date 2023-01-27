@@ -15,6 +15,7 @@ from anomaly_scores import calculate_scores
 def main(args):
     config = get_config(args.config, args.seed)
     exp_name = args.exp_name
+    num_sample = args.num_sample
 
     # Load dataset
     dataset_name = config.data.data
@@ -40,13 +41,14 @@ def main(args):
     config.ckpt = ckpt
 
     # Inference
-    calculate_scores(config, dataset, exp_name)
+    calculate_scores(config, dataset, exp_name, num_sample)
 
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=str, required=True, help='config path')
     parser.add_argument('--exp_name', type=str, required=True, help='experiment name')
+    parser.add_argument('--num_sample', type=int, default=1, required=False, help='number of samples per node')
     parser.add_argument('--seed', type=int, default=42, required=False, help='rng seed value')
     args = parser.parse_args()
     main(args)
