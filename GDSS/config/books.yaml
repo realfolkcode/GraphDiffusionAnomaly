@@ -52,7 +52,7 @@ train:
   eps: 1.0e-5
 
 sampler:
-  predictor: S4
+  predictor: PF
   corrector: None
   snr: 0.15
   scale_eps: 0.7
@@ -61,6 +61,6 @@ sampler:
 sample:
   use_ema: True
   noise_removal: True
-  probability_flow: False
+  probability_flow: True
   eps: 1.0e-4
   seed: 12

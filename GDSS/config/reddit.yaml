@@ -1,7 +1,7 @@
 data: 
   data: reddit
   dir: './data'
-  batch_size: 128 
+  batch_size: 1024
   test_split: 0.2
   max_node_num: 15
   max_feat_num: 64
@@ -39,9 +39,9 @@ model:
   
 train:
   name: test
-  num_epochs: 100
-  save_interval: 100
-  print_interval: 100
+  num_epochs: 1400
+  save_interval: 1400
+  print_interval: 10
   reduce_mean: False
   lr: 0.01
   lr_schedule: True
@@ -52,7 +52,7 @@ train:
   eps: 1.0e-5
 
 sampler:
-  predictor: S4
+  predictor: PF
   corrector: None
   snr: 0.15
   scale_eps: 0.7
@@ -61,6 +61,6 @@ sampler:
 sample:
   use_ema: True
   noise_removal: True
-  probability_flow: False
+  probability_flow: True
   eps: 1.0e-4
   seed: 12
