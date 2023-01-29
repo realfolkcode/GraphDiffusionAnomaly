@@ -8,7 +8,7 @@ from GDSS.utils.plot import plot_graphs_list
 from GDSS.reconstruction import Reconstructor
 
 
-def calculate_scores(config, dataset, exp_name, num_sample):
+def calculate_scores(config, dataset, exp_name, num_sample=1):
     reconstructor = Reconstructor(config)
     loader = dataloader(config, 
                         dataset,
