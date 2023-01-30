@@ -61,7 +61,7 @@ def calculate_scores(loader, reconstructor, data_len, exp_name, num_sample=1, pl
     return x_scores, adj_scores
 
 
-def save_final_scores(config, dataset, exp_name, trajectory_samples, num_sample=1):
+def save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample=1):
     reconstructor = Reconstructor(config)
     loader = dataloader(config, 
                         dataset,
@@ -70,7 +70,7 @@ def save_final_scores(config, dataset, exp_name, trajectory_samples, num_sample=
     data_len = len(dataset)
     
     endtime = config.sde.adj.endtime
-    T_lst = np.linspace(0, endtime, trajectory_samples + 2, endpoint=True)[1:-1]
+    T_lst = np.linspace(0, endtime, trajectory_sample + 2, endpoint=True)[1:-1]
     default_num_scales = config.sde.adj.num_scales
 
     x_scores_final = 0

@@ -15,7 +15,7 @@ from anomaly_scores import save_final_scores
 def main(args):
     config = get_config(args.config, args.seed)
     exp_name = args.exp_name
-    trajectory_samples = args.trajectory_samples
+    trajectory_sample = args.trajectory_sample
     num_sample = args.num_sample
 
     # Load dataset
@@ -42,7 +42,7 @@ def main(args):
     config.ckpt = ckpt
 
     # Inference
-    save_final_scores(config, dataset, exp_name, trajectory_samples, num_sample)
+    save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample)
 
 
 if __name__=="__main__":
