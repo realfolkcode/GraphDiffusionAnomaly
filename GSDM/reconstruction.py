@@ -61,7 +61,7 @@ class Reconstructor(torch.nn.Module):
         eigenvals /= (2 * x.shape[1])
         flags = node_flags(adj)
          # Project eigenvals with Random Fourier Features
-        eigenvals = self.featurizer(eigenvals)
+        eigenvals = self.featurizer(eigenvals.squeeze())
         perturbed_x, perturbed_adj, flags = self.perturb(x, eigenvals, flags)
         x, eigenvals, _ = self.sampling_fn(self.model_x, self.model_adj, flags,
                                      x=perturbed_x, adj=perturbed_adj)

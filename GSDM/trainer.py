@@ -67,7 +67,7 @@ class Trainer(object):
                 flags = node_flags(adj)
 
                 # Project eigenvals with Random Fourier Features
-                eigenvals = self.featurizer(eigenvals)
+                eigenvals = self.featurizer(eigenvals.squeeze())
                 loss_x, loss_adj = self.loss_fn(self.model_x, self.model_adj, *loss_subject, flags)
                 loss_x.backward()
                 loss_adj.backward()
