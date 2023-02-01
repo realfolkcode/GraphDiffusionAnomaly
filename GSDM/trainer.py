@@ -35,7 +35,7 @@ class Trainer(object):
                                                                                         self.device)
         self.ema_x = load_ema(self.model_x, decay=self.config.train.ema)
         self.ema_adj = load_ema(self.model_adj, decay=self.config.train.ema)
-        self.featurizer = load_featurizer(self.config)
+        self.featurizer = load_featurizer(self.config, self.device)
 
         logger = Logger(str(os.path.join(self.log_dir, f'{self.ckpt}.log')), mode='a')
         logger.log(f'{self.ckpt}', verbose=False)
