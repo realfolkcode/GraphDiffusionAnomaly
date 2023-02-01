@@ -60,7 +60,7 @@ class Trainer(object):
                 self.optimizer_x.zero_grad()
                 self.optimizer_adj.zero_grad()
                 x, adj, eigenvals, eigenvecs = load_batch(train_b, self.device)
-                eigenvals /= x.shape[1]
+                eigenvals /= (2 * x.shape[1])
                 loss_subject = (x, eigenvals)
 
                 flags = node_flags(adj)

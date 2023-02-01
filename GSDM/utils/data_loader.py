@@ -27,8 +27,10 @@ def collate_fn(graphs, max_node_num):
     graphs = [sample_subgraph(g, max_node_num) for g in graphs]
     graph_list = [g.adj().to_dense() for g in graphs]
 
+    degree_list = [pad_adjs(torch.diag(g.sum(-1)), max_node_num) for g in graph_list]
     graph_list = [pad_adjs(g, max_node_num) for g in graph_list]
     adjs_tensor = torch.stack(graph_list)
+    L = torch.stack(degree_list) - adjs_tensor
 
     x_tensor = torch.stack([F.pad(g.ndata['x'], 
                                   (0, 0, 0, max(max_node_num - len(g.nodes()), 0)), 
@@ -36,7 +38,9 @@ def collate_fn(graphs, max_node_num):
                             for g in graphs])
     
     # Compute eigendecomposition
-    eigenvals, eigenvecs = torch.linalg.eigh(adjs_tensor)
+    eigenvals, eigenvecs = torch.linalg.eigh(L)
+    # Eigenvals are in descending order
+    eigenvals = torch.flip(eigenvals, [-1])
 
     return x_tensor, adjs_tensor, eigenvals, eigenvecs
 
