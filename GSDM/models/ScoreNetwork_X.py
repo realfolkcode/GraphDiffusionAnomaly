@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 
-from .layers import DenseGCNConv, MLP
+from .layers import DenseGCNConv, MLP, GaussianFourierProjection
 from ..utils.graph_utils import mask_x, pow_tensor
 from .attention import  AttentionLayer
 
@@ -54,6 +54,8 @@ class ScoreNetworkX_GMH(torch.nn.Module):
         self.depth = depth
         self.c_init = c_init
 
+        self.rff = GaussianFourierProjection(cond_dim // 2)
+
         self.layers = torch.nn.ModuleList()
         for _ in range(self.depth):
             if _ == 0:
@@ -74,6 +76,7 @@ class ScoreNetworkX_GMH(torch.nn.Module):
 
     def forward(self, x, cond, flags):
         out_shape = (x.shape[0], x.shape[1], -1)
+        cond = self.rff(cond.squeeze())
         x_list = [x]
         for _ in range(self.depth):
             x = self.layers[_](x, cond, flags)
