@@ -55,13 +55,21 @@ class Reconstructor(torch.nn.Module):
     
     def forward(self, batch):
         x, adj, eigenvals, eigenvecs = load_batch(batch, self.device)
-        eigenvals /= x.shape[1]
+        eigenvals /= (2 * x.shape[1])
         flags = node_flags(adj)
         perturbed_x, perturbed_adj, flags = self.perturb(x, eigenvals, flags)
         x, eigenvals, _ = self.sampling_fn(self.model_x, self.model_adj, flags,
                                      x=perturbed_x, adj=perturbed_adj)
-        eigenvals = eigenvals.squeeze() * x.shape[1]
-        adj = eigenvecs @ torch.diag_embed(eigenvals) @ eigenvecs.mH
+        
+        eigenvals = torch.clamp(x.squeeze(), min=0, max=1)
+        eigenvals = eigenvals * 2 * x.shape[1]
+        # Restore the order of eigenvals
+        eigenvals = torch.flip(eigenvals, [-1])
+
+        L = eigenvecs @ torch.diag_embed(eigenvals) @ eigenvecs.mH
+        D = torch.diagonal(L, dim1=1, dim2=2)
+        D = torch.diag_embed(D)
+        adj = D - L
         adj = quantize(adj)
         return x, adj
         
