@@ -36,6 +36,7 @@ model:
   c_init: 2
   c_hid: 8
   c_final: 4
+  rff_dim: 16
   
 train:
   name: test

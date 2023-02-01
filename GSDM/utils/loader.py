@@ -4,6 +4,7 @@ import numpy as np
 
 from ..models.ScoreNetwork_A import ScoreNetworkA
 from ..models.ScoreNetwork_X import ScoreNetworkX, ScoreNetworkX_GMH
+from ..models.layers import GaussianFourierProjection
 from ..sde import VPSDE, VESDE, subVPSDE
 
 from ..losses import get_sde_loss_fn
@@ -46,6 +47,12 @@ def load_model(params):
     else:
         raise ValueError(f"Model Name <{model_type}> is Unknown")
     return model
+
+
+def load_featurizer(config):
+    rff_dim = config.model.rff_dim
+    featurizer = GaussianFourierProjection(rff_dim)
+    return featurizer
 
 
 def load_model_optimizer(params, config_train, device):
@@ -154,16 +161,17 @@ def load_sampling_fn(config_train, config_module, config_sample, device):
 def load_model_params(config):
     config_m = config.model
     max_feat_num = config.data.max_feat_num 
+    eig_dim = 2 * config.model.rff_dim
 
     if 'GMH' in config_m.x:
-        params_x = {'model_type': config_m.x, 'max_feat_num': max_feat_num, 'cond_dim': 1, 'depth': config_m.depth, 
-                    'nhid': config_m.nhid, 'num_linears': config_m.num_linears,
+        params_x = {'model_type': config_m.x, 'max_feat_num': max_feat_num, 'cond_dim': eig_dim, 'final_dim': max_feat_num, 
+                    'depth': config_m.depth, 'nhid': config_m.nhid, 'num_linears': config_m.num_linears,
                     'c_init': config_m.c_init, 'c_hid': config_m.c_hid, 'c_final': config_m.c_final, 
                     'adim': config_m.adim, 'num_heads': config_m.num_heads, 'conv':config_m.conv}
     else:
         params_x = {'model_type':config_m.x, 'max_feat_num':max_feat_num, 'depth':config_m.depth, 'nhid':config_m.nhid}
-    params_adj = {'model_type': config_m.x, 'max_feat_num': 1, 'cond_dim': max_feat_num, 'depth': config_m.depth, 
-                'nhid': config_m.nhid, 'num_linears': config_m.num_linears,
+    params_adj = {'model_type': config_m.x, 'max_feat_num': eig_dim, 'cond_dim': max_feat_num, 'final_dim': 1,
+                'depth': config_m.depth, 'nhid': config_m.nhid, 'num_linears': config_m.num_linears,
                 'c_init': config_m.c_init, 'c_hid': config_m.c_hid, 'c_final': config_m.c_final, 
                 'adim': config_m.adim, 'num_heads': config_m.num_heads, 'conv':config_m.conv}
     return params_x, params_adj

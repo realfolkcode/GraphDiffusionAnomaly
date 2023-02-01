@@ -1,6 +1,7 @@
 import torch
 from torch.nn import Parameter
 import torch.nn.functional as F
+import numpy as np
 import math
 from typing import Any
 
@@ -152,3 +153,14 @@ class MLP(torch.nn.Module):
                 h = self.activate_func(h)
             return self.linears[self.num_layers - 1](h)
 
+
+class GaussianFourierProjection(torch.nn.Module):
+  """Gaussian Fourier embeddings"""
+
+  def __init__(self, embedding_size=16, scale=16.0):
+    super().__init__()
+    self.W = torch.nn.Parameter(torch.randn(embedding_size) * scale, requires_grad=False)
+
+  def forward(self, x):
+    x_proj = x[:, :, None] * self.W[None, None, :] * 2 * np.pi
+    return torch.cat([torch.sin(x_proj), torch.cos(x_proj)], dim=-1)

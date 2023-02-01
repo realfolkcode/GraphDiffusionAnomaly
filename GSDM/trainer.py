@@ -5,7 +5,7 @@ import numpy as np
 import torch
 
 from .utils.loader import load_seed, load_device, load_data, load_model_params, load_model_optimizer, \
-                         load_ema, load_loss_fn, load_batch
+                         load_ema, load_loss_fn, load_batch, load_featurizer
 from .utils.logger import Logger, set_log, start_log, train_log
 from .utils.graph_utils import node_flags
 
@@ -35,6 +35,7 @@ class Trainer(object):
                                                                                         self.device)
         self.ema_x = load_ema(self.model_x, decay=self.config.train.ema)
         self.ema_adj = load_ema(self.model_adj, decay=self.config.train.ema)
+        self.featurizer = load_featurizer(self.config)
 
         logger = Logger(str(os.path.join(self.log_dir, f'{self.ckpt}.log')), mode='a')
         logger.log(f'{self.ckpt}', verbose=False)
@@ -60,10 +61,13 @@ class Trainer(object):
                 self.optimizer_x.zero_grad()
                 self.optimizer_adj.zero_grad()
                 x, adj, eigenvals, eigenvecs = load_batch(train_b, self.device)
+                # Normalize eigenvals
                 eigenvals /= (2 * x.shape[1])
                 loss_subject = (x, eigenvals)
-
                 flags = node_flags(adj)
+
+                # Project eigenvals with Random Fourier Features
+                eigenvals = self.featurizer(eigenvals)
                 loss_x, loss_adj = self.loss_fn(self.model_x, self.model_adj, *loss_subject, flags)
                 loss_x.backward()
                 loss_adj.backward()

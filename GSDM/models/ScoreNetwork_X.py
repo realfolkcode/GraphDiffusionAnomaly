@@ -47,7 +47,7 @@ class ScoreNetworkX(torch.nn.Module):
 
 
 class ScoreNetworkX_GMH(torch.nn.Module):
-    def __init__(self, max_feat_num, cond_dim, depth, nhid, num_linears,
+    def __init__(self, max_feat_num, cond_dim, final_dim, depth, nhid, num_linears,
                  c_init, c_hid, c_final, adim, num_heads=4, conv='vanilla'):
         super().__init__()
 
@@ -67,7 +67,7 @@ class ScoreNetworkX_GMH(torch.nn.Module):
                                                   c_hid, num_heads, conv))
 
         fdim = max_feat_num + depth * nhid
-        self.final = MLP(num_layers=3, input_dim=fdim, hidden_dim=2*fdim, output_dim=max_feat_num, 
+        self.final = MLP(num_layers=3, input_dim=fdim, hidden_dim=2*fdim, output_dim=final_dim, 
                          use_bn=False, activate_func=F.elu)
 
         self.activation = torch.tanh
