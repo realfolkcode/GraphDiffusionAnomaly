@@ -30,8 +30,6 @@ class Reconstructor(torch.nn.Module):
             
             self.ema_x.copy_to(self.model_x.parameters())
             self.ema_adj.copy_to(self.model_adj.parameters())
-        
-        self.featurizer = load_featurizer(self.config, self.device)
 
         self.sampling_fn = load_sampling_fn(self.config, self.config.sampler, self.config.sample, self.device)
 
