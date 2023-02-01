@@ -2,8 +2,8 @@ import torch
 from torch.nn import Parameter
 import torch.nn.functional as F
 
-from .layers import DenseGCNConv, MLP
-from ..utils.graph_utils import mask_adjs, pow_tensor
+from .layers import DenseGCNConv, MLP, GaussianFourierProjection
+from ..utils.graph_utils import mask_adjs, pow_tensor, mask_x
 from .attention import  AttentionLayer
 
 
@@ -98,53 +98,45 @@ class BaselineNetwork(torch.nn.Module):
         return score
 
 
-class ScoreNetworkA(BaselineNetwork):
+class ScoreNetworkA(torch.nn.Module):
+    def __init__(self, max_feat_num, cond_dim, final_dim, depth, nhid, num_linears,
+                 c_init, c_hid, c_final, adim, num_heads=4, conv='vanilla'):
+        super().__init__()
 
-    def __init__(self, max_feat_num, max_node_num, nhid, num_layers, num_linears, 
-                    c_init, c_hid, c_final, adim, num_heads=4, conv='GCN'):
+        self.depth = depth
+        self.c_init = c_init
 
-        super(ScoreNetworkA, self).__init__(max_feat_num, max_node_num, nhid, num_layers, num_linears, 
-                                            c_init, c_hid, c_final, adim, num_heads=4, conv='GCN')
-        
-        self.adim = adim
-        self.num_heads = num_heads
-        self.conv = conv
+        self.rff = GaussianFourierProjection(max_feat_num // 2)
 
         self.layers = torch.nn.ModuleList()
-        for _ in range(self.num_layers):
-            if _==0:
-                self.layers.append(AttentionLayer(self.num_linears, self.nfeat, self.nhid, self.nhid, self.c_init, 
-                                                    self.c_hid, self.num_heads, self.conv))
-            elif _==self.num_layers-1:
-                self.layers.append(AttentionLayer(self.num_linears, self.nhid, self.adim, self.nhid, self.c_hid, 
-                                                    self.c_final, self.num_heads, self.conv))
+        for _ in range(self.depth):
+            if _ == 0:
+                self.layers.append(AttentionLayer(num_linears, max_feat_num, cond_dim, nhid, nhid, c_init, 
+                                                  c_hid, num_heads, conv))
+            elif _ == self.depth - 1:
+                self.layers.append(AttentionLayer(num_linears, nhid, cond_dim, adim, nhid, c_hid, 
+                                                  c_final, num_heads, conv))
             else:
-                self.layers.append(AttentionLayer(self.num_linears, self.nhid, self.adim, self.nhid, self.c_hid, 
-                                                    self.c_hid, self.num_heads, self.conv))
+                self.layers.append(AttentionLayer(num_linears, nhid, cond_dim, adim, nhid, c_hid, 
+                                                  c_hid, num_heads, conv))
 
-        self.fdim = self.c_hid*(self.num_layers-1) + self.c_final + self.c_init
-        self.final = MLP(num_layers=3, input_dim=self.fdim, hidden_dim=2*self.fdim, output_dim=1, 
-                            use_bn=False, activate_func=F.elu)
-        self.mask = torch.ones([self.max_node_num, self.max_node_num]) - torch.eye(self.max_node_num)
-        self.mask.unsqueeze_(0)  
+        fdim = max_feat_num + depth * nhid
+        self.final = MLP(num_layers=3, input_dim=fdim, hidden_dim=2*fdim, output_dim=final_dim, 
+                         use_bn=False, activate_func=F.elu)
 
-    def forward(self, x, adj, flags):
+        self.activation = torch.tanh
 
-        adjc = pow_tensor(adj, self.c_init)
+    def forward(self, x, cond, flags):
+        out_shape = (x.shape[0], x.shape[1], -1)
+        x = self.rff(x.squeeze())
+        x_list = [x]
+        for _ in range(self.depth):
+            x = self.layers[_](x, cond, flags)
+            x = self.activation(x)
+            x_list.append(x)
 
-        adj_list = [adjc]
-        for _ in range(self.num_layers):
+        xs = torch.cat(x_list, dim=-1) # B x N x (F + num_layers x H)
+        x = self.final(xs).view(*out_shape)
+        x = mask_x(x, flags)
 
-            x, adjc = self.layers[_](x, adjc, flags)
-            adj_list.append(adjc)
-        
-        adjs = torch.cat(adj_list, dim=1).permute(0,2,3,1)
-        out_shape = adjs.shape[:-1] # B x N x N
-        score = self.final(adjs).view(*out_shape)
-        
-        self.mask = self.mask.to(score.device)
-        score = score * self.mask
-
-        score = mask_adjs(score, flags)
-
-        return score
+        return x

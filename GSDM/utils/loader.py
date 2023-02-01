@@ -49,13 +49,6 @@ def load_model(params):
     return model
 
 
-def load_featurizer(config, device):
-    rff_dim = config.model.rff_dim
-    featurizer = GaussianFourierProjection(rff_dim)
-    featurizer = featurizer.to(f'cuda:{device[0]}')
-    return featurizer
-
-
 def load_model_optimizer(params, config_train, device):
     model = load_model(params)
     if isinstance(device, list):

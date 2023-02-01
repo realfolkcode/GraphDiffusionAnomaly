@@ -2,7 +2,7 @@ import torch
 
 from .utils.loader import load_device, load_seed, load_model_from_ckpt, \
                               load_ema_from_ckpt, load_ckpt, load_sampling_fn, \
-                              load_batch, load_sde, load_featurizer
+                              load_batch, load_sde
 from .utils.graph_utils import node_flags, gen_noise, mask_x, mask_adjs, \
                                    quantize
 
@@ -60,8 +60,6 @@ class Reconstructor(torch.nn.Module):
         # Normalize eigenvals
         eigenvals /= (2 * x.shape[1])
         flags = node_flags(adj)
-         # Project eigenvals with Random Fourier Features
-        eigenvals = self.featurizer(eigenvals.squeeze())
         perturbed_x, perturbed_adj, flags = self.perturb(x, eigenvals, flags)
         x, eigenvals, _ = self.sampling_fn(self.model_x, self.model_adj, flags,
                                      x=perturbed_x, adj=perturbed_adj)

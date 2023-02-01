@@ -25,7 +25,7 @@ sde:
 
 model:
   x: ScoreNetworkX_GMH
-  adj: ScoreNetworkX_GMH
+  adj: ScoreNetworkA
   conv: vanilla
   num_heads: 4
   depth: 2

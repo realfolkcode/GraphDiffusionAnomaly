@@ -5,7 +5,7 @@ import numpy as np
 import torch
 
 from .utils.loader import load_seed, load_device, load_data, load_model_params, load_model_optimizer, \
-                         load_ema, load_loss_fn, load_batch, load_featurizer
+                         load_ema, load_loss_fn, load_batch
 from .utils.logger import Logger, set_log, start_log, train_log
 from .utils.graph_utils import node_flags
 
@@ -66,8 +66,6 @@ class Trainer(object):
                 loss_subject = (x, eigenvals)
                 flags = node_flags(adj)
 
-                # Project eigenvals with Random Fourier Features
-                eigenvals = self.featurizer(eigenvals.squeeze())
                 loss_x, loss_adj = self.loss_fn(self.model_x, self.model_adj, *loss_subject, flags)
                 loss_x.backward()
                 loss_adj.backward()
