@@ -61,7 +61,7 @@ class Reconstructor(torch.nn.Module):
         x, eigenvals, _ = self.sampling_fn(self.model_x, self.model_adj, flags,
                                      x=perturbed_x, adj=perturbed_adj)
         
-        eigenvals = torch.clamp(x.squeeze(), min=0, max=1)
+        eigenvals = torch.clamp(eigenvals.squeeze(), min=0, max=1)
         eigenvals = eigenvals * 2 * x.shape[1]
         # Restore the order of eigenvals
         eigenvals = torch.flip(eigenvals, [-1])
