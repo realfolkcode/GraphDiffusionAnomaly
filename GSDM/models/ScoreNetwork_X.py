@@ -55,6 +55,8 @@ class ScoreNetworkX_GMH(torch.nn.Module):
         self.c_init = c_init
 
         self.rff = GaussianFourierProjection(cond_dim // 2)
+        self.rff_mlp = MLP(num_layers=3, input_dim=cond_dim, hidden_dim=cond_dim, output_dim=cond_dim,
+                    use_bn=False, activate_func=F.elu)
 
         self.layers = torch.nn.ModuleList()
         for _ in range(self.depth):
@@ -77,6 +79,7 @@ class ScoreNetworkX_GMH(torch.nn.Module):
     def forward(self, x, cond, flags):
         out_shape = (x.shape[0], x.shape[1], -1)
         cond = self.rff(cond.squeeze())
+        cond = self.rff_mlp(cond)
         x_list = [x]
         for _ in range(self.depth):
             x = self.layers[_](x, cond, flags)
