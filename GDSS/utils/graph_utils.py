@@ -113,7 +113,7 @@ def adjs_to_graphs(adjs, is_cuda=False, empty_nodes=None, return_empty=False):
     for i, adj in enumerate(adjs):
         if is_cuda:
             adj = adj.detach().cpu().numpy()
-        G = nx.from_numpy_matrix(adj)
+        G = nx.from_numpy_array(adj)
         G.remove_edges_from(nx.selfloop_edges(G))
 
         if len(empty_nodes) < len(adjs):
