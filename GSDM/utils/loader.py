@@ -140,7 +140,7 @@ def load_sampling_fn(config_train, config_module, config_sample, device):
         shape_adj = (10000, max_node_num, max_node_num)
     else:
         shape_x = (config_train.data.batch_size, max_node_num, config_train.data.max_feat_num)
-        shape_adj = (config_train.data.batch_size, max_node_num, max_node_num)
+        shape_adj = (config_train.data.batch_size, max_node_num, 1)
         
     sampling_fn = get_sampler(sde_x=sde_x, sde_adj=sde_adj, shape_x=shape_x, shape_adj=shape_adj, 
                                 predictor=config_module.predictor, corrector=config_module.corrector,
