@@ -88,7 +88,11 @@ class AttentionLayer(torch.nn.Module):
         :return: x_out: B x N x F_o
         """
         x_list = []
-        for _ in range(len(self.attn)):
+        for _ in range(len(self.attn) // 2):
+            # Self-attention
+            _x = self.attn[_](x, x, flags)
+            x_list.append(_x)
+            # Cross-attention
             _x = self.attn[_](x, cond, flags)
             x_list.append(_x)
         x_out = mask_x(self.multi_channel(torch.cat(x_list, dim=-1)), flags)
