@@ -68,12 +68,15 @@ class AttentionLayer(torch.nn.Module):
 
         self.attn = torch.nn.ModuleList()
         for _ in range(input_dim):
-            self.attn_dim =  attn_dim 
+            self.attn_dim =  attn_dim
+            # Self-attention
+            self.attn.append(Attention(conv_input_dim, conv_input_dim, self.attn_dim, conv_output_dim,
+                                       num_heads=num_heads, conv=conv))
+            # Cross-attention
             self.attn.append(Attention(conv_input_dim, cond_dim, self.attn_dim, conv_output_dim,
                                         num_heads=num_heads, conv=conv))
-
+        input_dim = input_dim * 2
         self.hidden_dim = 2*max(input_dim, output_dim)
-        self.mlp = MLP(num_linears, 2*input_dim, self.hidden_dim, output_dim, use_bn=False, activate_func=F.elu)
         self.multi_channel = MLP(2, input_dim*conv_output_dim, self.hidden_dim, conv_output_dim, 
                                     use_bn=False, activate_func=F.elu)
 

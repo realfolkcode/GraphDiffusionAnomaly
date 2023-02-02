@@ -33,9 +33,9 @@ model:
   nhid: 32
   num_layers: 5
   num_linears: 2
-  c_init: 2
-  c_hid: 8
-  c_final: 4
+  c_init: 1
+  c_hid: 4
+  c_final: 2
   rff_dim: 16
   
 train:
