@@ -39,6 +39,12 @@ def node_flags(adj, eps=1e-5):
     return flags
 
 
+# -------- Count non-isolated nodes in graphs --------
+def count_nodes(adj):
+    flags = node_flags(adj)
+    return flags.sum(-1)
+
+
 # -------- Create initial node features --------
 def init_features(init, adjs=None, nfeat=10):
 
