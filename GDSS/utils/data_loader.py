@@ -9,23 +9,7 @@ from functools import partial
 from .graph_utils import pad_adjs
 
 
-def sample_subgraph(g, max_node_num):
-    if len(g.nodes()) <= max_node_num:
-        return g
-    idx = []
-    for bfs_nodes in dgl.bfs_nodes_generator(g, 0):
-        remaining = max_node_num - len(idx)
-        if remaining <= 0:
-            break
-        k = min(remaining, len(bfs_nodes))
-        idx += bfs_nodes[:k]
-    idx = idx[:max_node_num]
-    return dgl.node_subgraph(g, idx)
-
-
 def collate_fn(graphs, max_node_num):
-    graphs = [sample_subgraph(g, max_node_num) for g in graphs]
-
     graph_list = [g.adj().to_dense() for g in graphs]
 
     graph_list = [pad_adjs(g, max_node_num) for g in graph_list]

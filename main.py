@@ -25,10 +25,8 @@ def main(args):
     print(f'Number of nodes: {len(dataset)}')
 
     # Adjust max node num
-    ego_lens = dataset.graph.out_degrees().numpy()
-    max_node_num = int(np.quantile(ego_lens, 0.95))
-    config.data.max_node_num = max_node_num
-    print(f'Max size subgraphs (95% quantile): {max_node_num}')
+    config.data.max_node_num = dataset.max_node_num
+    print(f'Max size subgraphs (95% quantile): {config.data.max_node_num}')
 
     # Adjust feature dimension
     config.data.max_feat_num = dataset.feat_dim
