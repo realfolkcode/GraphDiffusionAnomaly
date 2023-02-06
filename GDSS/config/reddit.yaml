@@ -1,7 +1,7 @@
 data: 
   data: reddit
   dir: './data'
-  batch_size: 1024
+  batch_size: 2048
   test_split: 0.2
   max_node_num: 15
   max_feat_num: 64
@@ -44,7 +44,7 @@ train:
   print_interval: 10
   reduce_mean: False
   lr: 0.01
-  lr_schedule: True
+  lr_schedule: False
   ema: 0.999
   weight_decay: 0.01
   grad_norm: 1.0
@@ -59,7 +59,7 @@ sampler:
   n_steps: 1
 
 sample:
-  use_ema: True
+  use_ema: False
   noise_removal: True
   probability_flow: True
   eps: 1.0e-4
