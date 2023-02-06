@@ -111,16 +111,8 @@ class ScoreNetworkA(BaselineNetwork):
         self.conv = conv
 
         self.layers = torch.nn.ModuleList()
-        for _ in range(self.num_layers):
-            if _==0:
-                self.layers.append(AttentionLayer(self.num_linears, self.nfeat, self.nhid, self.nhid, self.c_init, 
-                                                    self.c_hid, self.num_heads, self.conv))
-            elif _==self.num_layers-1:
-                self.layers.append(AttentionLayer(self.num_linears, self.nhid, self.adim, self.nhid, self.c_hid, 
-                                                    self.c_final, self.num_heads, self.conv))
-            else:
-                self.layers.append(AttentionLayer(self.num_linears, self.nhid, self.adim, self.nhid, self.c_hid, 
-                                                    self.c_hid, self.num_heads, self.conv))
+        self.layers.append(AttentionLayer(self.num_linears, self.nfeat, self.nhid, self.nhid, self.c_init, 
+                                          self.c_final, self.num_heads, self.conv))
 
         self.fdim = self.c_hid*(self.num_layers-1) + self.c_final + self.c_init
         self.final = MLP(num_layers=3, input_dim=self.fdim, hidden_dim=2*self.fdim, output_dim=1, 

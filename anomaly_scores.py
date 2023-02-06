@@ -40,7 +40,7 @@ def calculate_scores(loader, reconstructor, data_len, exp_name, num_sample=1, pl
         adj_scores[i * bs:(i+1) * bs] = adj_err
 
         # Convert the first batch to networkx for plotting
-        if i == 0:
+        if i == 0 and plot_graphs:
             eps = 1e-9
             rel_x_err = torch.linalg.norm(x - x_reconstructed, dim=[2])
             rel_x_err /= (torch.linalg.norm(x, dim=[2]) + eps)

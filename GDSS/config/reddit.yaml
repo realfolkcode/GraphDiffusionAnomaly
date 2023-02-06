@@ -28,10 +28,10 @@ model:
   adj: ScoreNetworkA
   conv: GCN
   num_heads: 4
-  depth: 2
+  depth: 1
   adim: 32
   nhid: 32
-  num_layers: 5
+  num_layers: 1
   num_linears: 2
   c_init: 2
   c_hid: 8
