@@ -1,7 +1,7 @@
 data: 
   data: reddit
   dir: './data'
-  batch_size: 2048
+  batch_size: 4096
   test_split: 0.2
   max_node_num: 15
   max_feat_num: 64
