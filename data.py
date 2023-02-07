@@ -5,6 +5,7 @@ from pygod.utils import load_data
 import torch_geometric
 from torch_geometric.utils import is_undirected
 from torch_geometric.transforms import ToUndirected
+from tqdm import tqdm
 
 from utils import standardize
 
@@ -33,7 +34,7 @@ class AnomalyDataset(DGLDataset):
 
         # Create and store ego graphs
         self.ego_graphs = []
-        for idx in range(len(graph.nodes())):
+        for idx in tqdm(range(len(graph.nodes()))):
             g = dgl.khop_out_subgraph(graph, idx, self.radius)[0]
             g = self._sample_subgraph(g, self.max_node_num)
             self.ego_graphs.append(g)
