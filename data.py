@@ -55,6 +55,7 @@ class AnomalyDataset(DGLDataset):
     def _adjust_max_node_num(self, graph):
         ego_lens = graph.out_degrees().numpy()
         self.max_node_num = int(np.quantile(ego_lens, 0.95))
+        self.max_node_num = max(50, self.max_node_num)
 
     def __getitem__(self, idx):
         return self.ego_graphs[idx]
