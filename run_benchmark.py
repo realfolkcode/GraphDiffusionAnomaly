@@ -16,7 +16,7 @@ from anomaly_scores import save_final_scores
 def run_experiment(config, dataset, exp_name, **kwargs):
     # Train GDSS
     trainer = Trainer(config)
-    train_loader = dataloader(config, dataset)
+    train_loader = dataloader(config, dataset, drop_last=False)
     trainer.train_loader = train_loader
     ckpt = trainer.train(exp_name)
     config.ckpt = ckpt
