@@ -15,6 +15,7 @@ def calculate_scores(loader, reconstructor, data_len, exp_name, num_sample=1, pl
     gen_graph_list = []
     orig_graph_list = []
 
+    batch_start_pos = 0
     for i, batch in tqdm(enumerate(loader)):
         x = batch[0]
         adj = batch[1]
@@ -36,8 +37,12 @@ def calculate_scores(loader, reconstructor, data_len, exp_name, num_sample=1, pl
             adj_err = adj_err + torch.linalg.norm(adj - adj_reconstructed, dim=[1, 2]) / (num_nodes**2)
 
         bs = x.shape[0]
-        x_scores[i * bs:(i+1) * bs] = x_err
-        adj_scores[i * bs:(i+1) * bs] = adj_err
+        batch_end_pos = batch_start_pos + bs
+
+        x_scores[batch_start_pos:batch_end_pos] = x_err
+        adj_scores[batch_start_pos:batch_end_pos] = adj_err
+
+        batch_start_pos = batch_end_pos
 
         # Convert the first batch to networkx for plotting
         if i == 0 and plot_graphs:
