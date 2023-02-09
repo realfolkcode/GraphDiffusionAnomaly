@@ -1,5 +1,5 @@
 data: 
-  data: books
+  data: disney
   dir: './data'
   batch_size: 124
   test_split: 0.2
