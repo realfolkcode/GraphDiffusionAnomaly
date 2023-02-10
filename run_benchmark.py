@@ -29,7 +29,9 @@ def run_experiment(config, dataset, exp_name, **kwargs):
                       save_intermediate=False)
 
 
-def draw_hyperparameters(config, dataset_name):
+def draw_hyperparameters(config, dataset_name, exp_num):
+    config.seed = exp_num
+    
     lr = [0.1, 0.05, 0.01]
     weight_decay = 0.01
 
@@ -73,7 +75,7 @@ def run_benchmark(args):
 
     for i in range(num_trials):
         print(f'Running experiment no. {i}')
-        config = draw_hyperparameters(config, dataset_name)
+        config = draw_hyperparameters(config, dataset_name, exp_num)
         run_experiment(config, dataset, f'{exp_name}_{i}', 
                        trajectory_sample=args.trajectory_sample, num_sample=args.num_sample)
 
