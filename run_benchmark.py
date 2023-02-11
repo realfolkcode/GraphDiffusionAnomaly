@@ -58,8 +58,9 @@ def run_benchmark(args):
     exp_name = args.exp_name
 
     # Load dataset
+    radius = args.radius
     dataset_name = config.data.data
-    dataset = AnomalyDataset(dataset_name, radius=1)
+    dataset = AnomalyDataset(dataset_name, radius=radius)
     print(f'Dataset: {dataset_name}')
     print(f'Number of nodes: {len(dataset)}')
 
@@ -86,6 +87,7 @@ if __name__=="__main__":
     parser.add_argument('--exp_name', type=str, required=True, help='experiment name')
     parser.add_argument('--trajectory_sample', type=int, default=1, required=False, help='number of samples per trajectory')
     parser.add_argument('--num_sample', type=int, default=1, required=False, help='number of samples per node')
+    parser.add_argument('--radius', type=int, default=1, required=False, help='radius of ego-graphs')
     parser.add_argument('--seed', type=int, default=42, required=False, help='rng seed value')
     args = parser.parse_args()
     run_benchmark(args)
