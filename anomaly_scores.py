@@ -8,7 +8,9 @@ from GDSS.utils.plot import plot_graphs_list
 from GDSS.reconstruction import Reconstructor
 
 
-def calculate_scores(loader, reconstructor, data_len, exp_name, num_sample=1, plot_graphs=True, save_res=True):
+def calculate_scores(config, loader, data_len, exp_name, num_sample=1, plot_graphs=True, save_res=True):
+    reconstructor = Reconstructor(config)
+
     x_scores = torch.zeros(data_len)
     adj_scores = torch.zeros(data_len)
 
@@ -68,7 +70,6 @@ def calculate_scores(loader, reconstructor, data_len, exp_name, num_sample=1, pl
 
 
 def save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample=1, save_intermediate=True):
-    reconstructor = Reconstructor(config)
     loader = dataloader(config, 
                         dataset,
                         shuffle=False,
@@ -83,9 +84,14 @@ def save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample=1
     adj_scores_final = 0
 
     for T in T_lst:
+        config.sde.x.endtime = T
+        config.sde.adj.endtime = T
         new_num_scales = int(T * default_num_scales)
+        config.sde.x.num_scales = new_num_scales
+        config.sde.adj.num_scales = new_num_scales
+
         new_exp_name = f'{exp_name}_scales_{new_num_scales}'
-        x_scores, adj_scores = calculate_scores(loader, reconstructor, data_len, new_exp_name,
+        x_scores, adj_scores = calculate_scores(config, loader, data_len, new_exp_name,
                                                 num_sample=num_sample, plot_graphs=False,
                                                 save_res=save_intermediate)
         x_scores_final = x_scores_final + x_scores
@@ -94,4 +100,3 @@ def save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample=1
     with open(f'{exp_name}_final_scores.npy', 'wb') as f:
         np.save(f, x_scores_final.numpy())
         np.save(f, adj_scores_final.numpy())
-    

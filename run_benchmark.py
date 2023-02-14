@@ -23,10 +23,11 @@ def run_experiment(config, dataset, exp_name, **kwargs):
 
     trajectory_sample = kwargs['trajectory_sample']
     num_sample = kwargs['num_sample']
+    num_steps = kwargs['num_steps']
 
     # Inference
     save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample, 
-                      save_intermediate=False)
+                      num_steps, save_intermediate=False)
 
 
 def draw_hyperparameters(config, dataset_name, exp_num):
@@ -78,7 +79,8 @@ def run_benchmark(args):
         print(f'Running experiment no. {i}')
         config = draw_hyperparameters(config, dataset_name, i)
         run_experiment(config, dataset, f'{exp_name}_{i}', 
-                       trajectory_sample=args.trajectory_sample, num_sample=args.num_sample)
+                       trajectory_sample=args.trajectory_sample, num_sample=args.num_sample,
+                       num_steps=args.nym_steps)
 
 
 if __name__=="__main__":
@@ -88,6 +90,7 @@ if __name__=="__main__":
     parser.add_argument('--trajectory_sample', type=int, default=1, required=False, help='number of samples per trajectory')
     parser.add_argument('--num_sample', type=int, default=1, required=False, help='number of samples per node')
     parser.add_argument('--radius', type=int, default=1, required=False, help='radius of ego-graphs')
+    parser.add_argument('--num_steps', type=int, default=100, required=False, help='number of sampling steps')
     parser.add_argument('--seed', type=int, default=42, required=False, help='rng seed value')
     args = parser.parse_args()
     run_benchmark(args)
