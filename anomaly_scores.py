@@ -69,7 +69,7 @@ def calculate_scores(config, loader, data_len, exp_name, num_sample=1, plot_grap
     return x_scores, adj_scores
 
 
-def save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample=1, save_intermediate=True):
+def save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample=1, num_steps=100, save_intermediate=True):
     loader = dataloader(config, 
                         dataset,
                         shuffle=False,
