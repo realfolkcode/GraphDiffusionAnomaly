@@ -80,7 +80,7 @@ def run_benchmark(args):
         config = draw_hyperparameters(config, dataset_name, i)
         run_experiment(config, dataset, f'{exp_name}_{i}', 
                        trajectory_sample=args.trajectory_sample, num_sample=args.num_sample,
-                       num_steps=args.nym_steps)
+                       num_steps=args.num_steps)
 
 
 if __name__=="__main__":
