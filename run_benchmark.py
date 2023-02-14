@@ -65,18 +65,18 @@ def run_benchmark(args):
     print(f'Dataset: {dataset_name}')
     print(f'Number of nodes: {len(dataset)}')
 
-    # Adjust max node num
-    config.data.max_node_num = dataset.max_node_num
-    print(f'Max size subgraphs (95% quantile): {config.data.max_node_num}')
-
-    # Adjust feature dimension
-    config.data.max_feat_num = dataset.feat_dim
-    print(f'Feature dimension: {config.data.max_feat_num}')
-
     config.train.print_interval = 50
 
     for i in range(num_trials):
         print(f'Running experiment no. {i}')
+        config = get_config(args.config, args.seed)
+        # Adjust max node num
+        config.data.max_node_num = dataset.max_node_num
+        print(f'Max size subgraphs (95% quantile): {config.data.max_node_num}')
+        # Adjust feature dimension
+        config.data.max_feat_num = dataset.feat_dim
+        print(f'Feature dimension: {config.data.max_feat_num}')
+        
         config = draw_hyperparameters(config, dataset_name, i)
         run_experiment(config, dataset, f'{exp_name}_{i}', 
                        trajectory_sample=args.trajectory_sample, num_sample=args.num_sample,
