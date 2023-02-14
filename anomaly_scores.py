@@ -78,7 +78,6 @@ def save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample=1
     
     endtime = config.sde.adj.endtime
     T_lst = np.linspace(0, endtime, trajectory_sample + 2, endpoint=True)[1:-1]
-    default_num_scales = config.sde.adj.num_scales
 
     x_scores_final = 0
     adj_scores_final = 0
@@ -86,7 +85,7 @@ def save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample=1
     for T in T_lst:
         config.sde.x.endtime = T
         config.sde.adj.endtime = T
-        new_num_scales = int(T * default_num_scales)
+        new_num_scales = int(T * num_steps)
         config.sde.x.num_scales = new_num_scales
         config.sde.adj.num_scales = new_num_scales
 
