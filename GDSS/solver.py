@@ -334,18 +334,20 @@ def get_ode_sampler(sde_x, sde_adj, shape_x, shape_adj, predictor='None', correc
       timesteps = torch.linspace(sde_adj.T, eps, diff_steps, device=device)
 
       bs = adj.shape[0]
-
-      def ode_func_x(t, x, adj, shape):
-        x = from_flattened_numpy(x, shape).to(device).type(torch.float32)
-        vec_t = torch.ones(bs, device=x.device) * t
-        drift = drift_fn(model_x, x, adj, flags, vec_t, is_adj=False)
-        return to_flattened_numpy(drift)
       
-      def ode_func_adj(t, adj, x, shape):
-        adj = from_flattened_numpy(adj, shape).to(device).type(torch.float32)
-        vec_t = torch.ones(bs, device=adj.device) * t
-        drift = drift_fn(model_adj, x, adj, flags, vec_t, is_adj=True)
-        return to_flattened_numpy(drift)
+      def ode_func(t, g, shape_x, shape_adj):
+         len_flat_x = shape_x[0] * shape_x[1] * shape_x[2]
+         x = g[:len_flat_x]
+         adj = g[len_flat_x:]
+         x = from_flattened_numpy(x, shape_x).to(device).type(torch.float32)
+         adj = from_flattened_numpy(adj, shape_adj).to(device).type(torch.float32)
+         vec_t = torch.ones(bs, device=x.device) * t
+         drift_x = drift_fn(model_x, x, adj, flags, vec_t, is_adj=False)
+         drift_x = to_flattened_numpy(drift_x)
+         drift_adj = drift_fn(model_adj, x, adj, flags, vec_t, is_adj=True)
+         drift_adj = to_flattened_numpy(drift_adj)
+         drift = np.concatenate((drift_x, drift_adj))
+         return drift
       
       shape_x_new = list(shape_x)
       shape_x_new[0] = bs
@@ -353,16 +355,15 @@ def get_ode_sampler(sde_x, sde_adj, shape_x, shape_adj, predictor='None', correc
       shape_adj_new[0] = bs
       
       # Black-box ODE solver for the probability flow ODE
-      solution_x = integrate.solve_ivp(ode_func_x, (sde_x.T, eps), to_flattened_numpy(x), t_eval=[sde_x.T], 
-                                       rtol=rtol, atol=atol, method=method, args=(adj, shape_x_new))
-      solution_adj = integrate.solve_ivp(ode_func_adj, (sde_adj.T, eps), to_flattened_numpy(adj), t_eval=[sde_adj.T], 
-                                         rtol=rtol, atol=atol, method=method, args=(x, shape_adj_new))
-      nfe_x = solution_x.nfev
-      nfe_adj = solution_adj.nfev
+      g0 = np.concatenate((to_flattened_numpy(x), to_flattened_numpy(adj)))
+      solution = integrate.solve_ivp(ode_func, (sde_x.T, eps), g0, t_eval=[sde_x.T], 
+                                     rtol=rtol, atol=atol, method=method, args=(shape_x_new, shape_adj_new))
+      len_flat_x = shape_x_new[0] * shape_x_new[1] * shape_x_new[2]
+      nfe = solution.nfev
 
-      x = torch.tensor(solution_x.y[:, -1]).reshape(shape_x_new).to(device).type(torch.float32)
-      adj = torch.tensor(solution_adj.y[:, -1]).reshape(shape_adj_new).to(device).type(torch.float32)
-      return x, adj, nfe_adj
+      x = torch.tensor(solution.y[:len_flat_x, -1]).reshape(shape_x_new).to(device).type(torch.float32)
+      adj = torch.tensor(solution.y[len_flat_x:, -1]).reshape(shape_adj_new).to(device).type(torch.float32)
+      return x, adj, nfe
     
 
   return ode_sampler
