@@ -94,8 +94,8 @@ def get_likelihood_fn(sde_x, sde_adj,
       z_adj = from_flattened_numpy(zp[len_flat_x:-bs], shape_adj).to(adj.device).type(torch.float32)
       delta_logp = from_flattened_numpy(zp[-bs:], (bs,)).to(x.device).type(torch.float32)
       prior_logp = sde_x.prior_logp(z_x) + sde_adj.prior_logp(z_adj)
-      bpd = -(prior_logp + delta_logp)
-      return bpd
+      nll = -(prior_logp + delta_logp)
+      return nll
 
   return likelihood_fn
 
