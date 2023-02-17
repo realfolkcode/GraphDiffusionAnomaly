@@ -6,6 +6,7 @@ from GDSS.utils.data_loader import dataloader
 from GDSS.utils.graph_utils import adjs_to_graphs, count_nodes
 from GDSS.utils.plot import plot_graphs_list
 from GDSS.reconstruction import Reconstructor
+from GDSS.likelihood import LikelihoodEstimator
 
 
 def calculate_scores(config, loader, data_len, exp_name, num_sample=1, plot_graphs=True, save_res=True):
@@ -99,3 +100,28 @@ def save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample=1
     with open(f'{exp_name}_final_scores.npy', 'wb') as f:
         np.save(f, x_scores_final.numpy())
         np.save(f, adj_scores_final.numpy())
+
+
+def save_likelihood_scores(config, dataset, exp_name):
+    likelihood_estimator = LikelihoodEstimator(config)
+    loader = dataloader(config, 
+                        dataset,
+                        shuffle=False,
+                        drop_last=False)
+    data_len = len(dataset)
+
+    scores = torch.zeros(data_len)
+    batch_start_pos = 0
+    for i, batch in tqdm(enumerate(loader)):
+        x = batch[0]
+        adj = batch[1]
+
+        bs = x.shape[0]
+        batch_end_pos = batch_start_pos + bs
+
+        scores[batch_start_pos:batch_end_pos] = likelihood_estimator(batch)
+
+        batch_start_pos = batch_end_pos
+
+    with open(f'{exp_name}_final_scores.npy', 'wb') as f:
+        np.save(f, scores.numpy())

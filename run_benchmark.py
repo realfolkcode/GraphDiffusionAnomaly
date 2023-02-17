@@ -10,7 +10,7 @@ from GDSS.trainer import Trainer
 from GDSS.utils.data_loader import dataloader
 
 from data import AnomalyDataset
-from anomaly_scores import save_final_scores
+from anomaly_scores import save_final_scores, save_likelihood_scores
 
 
 def run_experiment(config, dataset, exp_name, **kwargs):
@@ -24,10 +24,14 @@ def run_experiment(config, dataset, exp_name, **kwargs):
     trajectory_sample = kwargs['trajectory_sample']
     num_sample = kwargs['num_sample']
     num_steps = kwargs['num_steps']
+    is_likelihood = kwargs['is_likelihood']
 
     # Inference
-    save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample, 
-                      num_steps, save_intermediate=False)
+    if is_likelihood:
+        save_likelihood_scores(config, dataset, exp_name)
+    else:
+        save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample, 
+                        num_steps, save_intermediate=False)
 
 
 def draw_hyperparameters(config, dataset_name, exp_num):
@@ -80,7 +84,7 @@ def run_benchmark(args):
         config = draw_hyperparameters(config, dataset_name, i)
         run_experiment(config, dataset, f'{exp_name}_{i}', 
                        trajectory_sample=args.trajectory_sample, num_sample=args.num_sample,
-                       num_steps=args.num_steps)
+                       num_steps=args.num_steps, is_likelihood=args.is_likelihood)
 
 
 if __name__=="__main__":
@@ -92,5 +96,6 @@ if __name__=="__main__":
     parser.add_argument('--radius', type=int, default=1, required=False, help='radius of ego-graphs')
     parser.add_argument('--num_steps', type=int, default=100, required=False, help='number of sampling steps')
     parser.add_argument('--seed', type=int, default=42, required=False, help='rng seed value')
+    parser.add_argument('--is_likelihood', type=bool, default=False, required=False, help='compute anomaly scores as likelihood')
     args = parser.parse_args()
     run_benchmark(args)
