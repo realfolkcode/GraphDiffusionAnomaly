@@ -17,7 +17,7 @@ def get_div_fn(fn_x, fn_adj):
     bs = adj.shape[0]
     with torch.enable_grad():
       x.requires_grad_(True)
-      adj.required_grad_(True)
+      adj.requires_grad_(True)
       xx = fn_x(x, adj, t)
       aa = fn_adj(x, adj, t)
       fn_res = torch.concat((xx, aa), -1)
