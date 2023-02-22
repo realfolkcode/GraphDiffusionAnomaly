@@ -19,11 +19,10 @@ def get_div_fn(fn_x, fn_adj):
       x.requires_grad_(True)
       adj.required_grad_(True)
       xx = fn_x(x, adj, t)
-      aa = fn_adj(x, adj, t).reshape((bs, -1))
+      aa = fn_adj(x, adj, t)
       fn_res = torch.concat((xx, aa), -1)
       fn_eps = torch.sum(fn_res * eps)
-      g = torch.concat((x,
-                        adj.reshape((bs, -1))), -1)
+      g = torch.concat((x, adj), -1)
       grad_fn_eps = torch.autograd.grad(fn_eps, g)[0]
     x.requires_grad_(False)
     adj.requires_grad_(False)
@@ -66,7 +65,6 @@ def get_likelihood_fn(sde_x, sde_adj,
       bs = shape_x[0]
       epsilon_x = mask_x(torch.randn_like(x), flags)
       epsilon_adj = mask_adjs(torch.randn_like(adj), flags)
-      epsilon_adj = epsilon_adj.reshape((bs, -1))
       epsilon = torch.concat((epsilon_x, epsilon_adj), -1)
 
       def ode_func(t, g):
