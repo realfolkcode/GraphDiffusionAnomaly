@@ -54,9 +54,9 @@ def get_likelihood_fn(sde_x, sde_adj,
       rsde = sde_x.reverse(score_fn, probability_flow=True)
       return rsde.sde(x, adj, flags, t, is_adj=False)[0]
 
-  def div_fn(model_x, model_adj, x, adj, flags, t, noise_x, noise_adj):
+  def div_fn(model_x, model_adj, x, adj, flags, t, noise):
     return get_div_fn(lambda xx, aa, tt: drift_fn(model_x, xx, aa, flags, tt, False),
-                      lambda xx, aa, tt: drift_fn(model_adj, xx, aa, flags, tt, True))(x, adj, t, noise_x, noise_adj)
+                      lambda xx, aa, tt: drift_fn(model_adj, xx, aa, flags, tt, True))(x, adj, t, noise)
 
   def likelihood_fn(model_x, model_adj, x, adj, flags):
     with torch.no_grad():
