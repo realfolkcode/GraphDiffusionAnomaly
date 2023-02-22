@@ -64,8 +64,8 @@ def get_likelihood_fn(sde_x, sde_adj,
       shape_x = x.shape
       shape_adj = adj.shape
       bs = shape_x[0]
-      epsilon_x = mask_x(torch.randn_like(x))
-      epsilon_adj = mask_adjs(torch.randn_like(adj))
+      epsilon_x = mask_x(torch.randn_like(x), flags)
+      epsilon_adj = mask_adjs(torch.randn_like(adj), flags)
       epsilon_adj = epsilon_adj.reshape((bs, -1))
       epsilon = torch.concat((epsilon_x, epsilon_adj), -1)
 
