@@ -22,12 +22,13 @@ def get_div_fn(fn_x, fn_adj):
       aa = fn_adj(x, adj, t)
       fn_res = torch.concat((xx, aa), -1)
       fn_eps = torch.sum(fn_res * eps)
-      g = torch.concat((x, adj), -1)
-      grad_fn_eps = torch.autograd.grad(fn_eps, g)[0]
+      grad_fn_eps = torch.autograd.grad(fn_eps, (x, adj))
+      grad_fn_eps = torch.concat((grad_fn_eps[0],
+                                  grad_fn_eps[1]), -1)
     x.requires_grad_(False)
     adj.requires_grad_(False)
     
-    return torch.sum(grad_fn_eps * eps, dim=tuple(range(1, len(g.shape))))
+    return torch.sum(grad_fn_eps * eps, dim=tuple(range(1, len(x.shape))))
 
   return div_fn
 
