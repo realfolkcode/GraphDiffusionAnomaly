@@ -103,7 +103,7 @@ def save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample=1
 
 
 def save_likelihood_scores(config, dataset, exp_name, num_sample):
-    likelihood_estimator = LikelihoodEstimator(config)
+    likelihood_estimator = LikelihoodEstimator(config, num_sample)
     loader = dataloader(config, 
                         dataset,
                         shuffle=False,
