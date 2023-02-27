@@ -14,7 +14,6 @@ def get_div_fn(fn_x, fn_adj):
   """Create the divergence function of `fn` using the Hutchinson-Skilling trace estimator."""
 
   def div_fn(x, adj, t, eps):
-    bs = adj.shape[0]
     with torch.enable_grad():
       x.requires_grad_(True)
       adj.requires_grad_(True)
@@ -103,7 +102,7 @@ def get_likelihood_fn(sde_x, sde_adj,
 
 
 class LikelihoodEstimator(torch.nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, num_sample):
         super().__init__()
 
         self.config = config
@@ -130,11 +129,15 @@ class LikelihoodEstimator(torch.nn.Module):
         self.sde_adj = load_sde(config.sde.adj)
 
         self.likelihood_fn = get_likelihood_fn(self.sde_x, self.sde_adj)
+        self.num_sample = num_sample
         
     
     def forward(self, batch):
         x, adj = load_batch(batch, self.device)
         flags = node_flags(adj)
-        likelihood = self.likelihood_fn(self.model_x, self.model_adj, x, adj, flags)
+        likelihood = 0
+        for i in range(self.num_sample):
+            likelihood = likelihood + self.likelihood_fn(self.model_x, self.model_adj, x, adj, flags)
+        likelihood /= self.num_sample
         return likelihood
         

@@ -102,7 +102,7 @@ def save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample=1
         np.save(f, adj_scores_final.numpy())
 
 
-def save_likelihood_scores(config, dataset, exp_name):
+def save_likelihood_scores(config, dataset, exp_name, num_sample):
     likelihood_estimator = LikelihoodEstimator(config)
     loader = dataloader(config, 
                         dataset,
