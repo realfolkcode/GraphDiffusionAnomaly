@@ -6,7 +6,7 @@ from dgl.dataloading import GraphDataLoader
 import numpy as np
 from functools import partial
 
-from .graph_utils import pad_adjs
+from .graph_utils import pad_adjs, mask_adjs, node_flags
 
 
 def collate_fn(graphs, max_node_num, dequantize):
@@ -21,8 +21,10 @@ def collate_fn(graphs, max_node_num, dequantize):
                             for g in graphs])
 
     if dequantize:
+        flags = node_flags(adjs_tensor)
         noise = torch.rand_like(adjs_tensor) / 2
         adjs_tensor -= torch.sign(adjs_tensor - 0.5) * noise
+        adjs_tensor = mask_adjs(adjs_tensor, flags)
 
     return x_tensor, adjs_tensor
 
