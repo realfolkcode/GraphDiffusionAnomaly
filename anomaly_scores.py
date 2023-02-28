@@ -107,7 +107,8 @@ def save_likelihood_scores(config, dataset, exp_name, num_sample):
     loader = dataloader(config, 
                         dataset,
                         shuffle=False,
-                        drop_last=False)
+                        drop_last=False,
+                        dequantize=True)
     data_len = len(dataset)
 
     scores = torch.zeros(data_len)
