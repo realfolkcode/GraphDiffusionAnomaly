@@ -7,7 +7,7 @@ from GDSS.utils.loader import load_device, load_seed, load_model_from_ckpt, \
                               load_ema_from_ckpt, load_ckpt, load_sampling_fn, \
                               load_batch, load_sde
 from GDSS.utils.graph_utils import node_flags, gen_noise, mask_x, mask_adjs, \
-                                   quantize
+                                   quantize, count_nodes
 
 
 def get_div_fn(fn_x, fn_adj):
@@ -94,7 +94,9 @@ def get_likelihood_fn(sde_x, sde_adj,
       z_x = from_flattened_numpy(zp[:len_flat_x], shape_x).to(x.device).type(torch.float32)
       z_adj = from_flattened_numpy(zp[len_flat_x:-bs], shape_adj).to(adj.device).type(torch.float32)
       delta_logp = from_flattened_numpy(zp[-bs:], (bs,)).to(x.device).type(torch.float32)
-      prior_logp = sde_x.prior_logp(z_x) + sde_adj.prior_logp(z_adj)
+      N_x = count_nodes(adj) * shape_x[-1]
+      N_adj = count_nodes(adj)**2
+      prior_logp = sde_x.prior_logp(z_x, N_x) + sde_adj.prior_logp(z_adj, N_adj)
       nll = -(prior_logp + delta_logp)
       return nll
 

@@ -37,11 +37,12 @@ class SDE(abc.ABC):
     pass
 
   @abc.abstractmethod
-  def prior_logp(self, z):
+  def prior_logp(self, z, N):
     """Compute log-density of the prior distribution.
     Useful for computing the log-likelihood via probability flow ODE.
     Args:
       z: latent code
+      N: number of components
     Returns:
       log probability density
     """
@@ -146,9 +147,7 @@ class VPSDE(SDE):
     x = torch.randn(*shape).triu(1) 
     return x + x.transpose(-1,-2)
 
-  def prior_logp(self, z):
-    shape = z.shape
-    N = np.prod(shape[1:])
+  def prior_logp(self, z, N):
     logps = -N / 2. * np.log(2 * np.pi) - torch.sum(z ** 2, dim=(1, 2)) / 2.
     return logps
 
@@ -208,9 +207,7 @@ class VESDE(SDE):
     x = x + x.transpose(-1,-2)
     return x 
 
-  def prior_logp(self, z):
-    shape = z.shape
-    N = np.prod(shape[1:])
+  def prior_logp(self, z, N):
     return -N / 2. * np.log(2 * np.pi * self.sigma_max ** 2) - torch.sum(z ** 2, dim=(1, 2, 3)) / (2 * self.sigma_max ** 2)
 
   def discretize(self, x, t):
@@ -271,7 +268,5 @@ class subVPSDE(SDE):
     x = torch.randn(*shape).triu(1) 
     return x + x.transpose(-1,-2)
 
-  def prior_logp(self, z):
-    shape = z.shape
-    N = np.prod(shape[1:])
+  def prior_logp(self, z, N):
     return -N / 2. * np.log(2 * np.pi) - torch.sum(z ** 2, dim=(1, 2, 3)) / 2.
