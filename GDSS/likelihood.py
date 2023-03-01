@@ -99,8 +99,9 @@ def get_likelihood_fn(sde_x, sde_adj,
       N_x = num_nodes * shape_x[-1]
       N_adj = num_nodes**2 - num_nodes
       if sde_adj.sym:
-         N_adj /= 2
-      prior_logp = sde_x.prior_logp(z_x, N_x) + sde_adj.prior_logp(z_adj, N_adj)
+          prior_logp = sde_x.prior_logp(z_x, N_x) + sde_adj.prior_logp(z_adj, N_adj) / 2
+      else:
+          prior_logp = sde_x.prior_logp(z_x, N_x) + sde_adj.prior_logp(z_adj, N_adj)
 
       nll = -(prior_logp + delta_logp)
       return nll
