@@ -94,9 +94,14 @@ def get_likelihood_fn(sde_x, sde_adj,
       z_x = from_flattened_numpy(zp[:len_flat_x], shape_x).to(x.device).type(torch.float32)
       z_adj = from_flattened_numpy(zp[len_flat_x:-bs], shape_adj).to(adj.device).type(torch.float32)
       delta_logp = from_flattened_numpy(zp[-bs:], (bs,)).to(x.device).type(torch.float32)
-      N_x = count_nodes(adj) * shape_x[-1]
-      N_adj = count_nodes(adj)**2
+
+      num_nodes = count_nodes(adj)
+      N_x = num_nodes * shape_x[-1]
+      N_adj = num_nodes**2 - num_nodes
+      if sde_adj.sym:
+         N_adj /= 2
       prior_logp = sde_x.prior_logp(z_x, N_x) + sde_adj.prior_logp(z_adj, N_adj)
+
       nll = -(prior_logp + delta_logp)
       return nll
 
