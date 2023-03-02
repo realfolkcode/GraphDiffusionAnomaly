@@ -139,7 +139,7 @@ class ScoreNetworkA(BaselineNetwork):
         score = score * self.mask
 
         if self.sym:
-            score = score + score.transpose(-1, -2)
+            score = (score + score.transpose(-1, -2)) / 2
 
         score = mask_adjs(score, flags)
 
