@@ -85,7 +85,7 @@ def gen_noise(x, flags, sym=True):
     z = torch.randn_like(x)
     if sym:
         z = z.triu(1)
-        z = (z + z.transpose(-1,-2)) / np.sqrt(2)
+        z = z + z.transpose(-1,-2)
         z = mask_adjs(z, flags)
     else:
         z = mask_x(z, flags)
