@@ -65,6 +65,8 @@ def get_likelihood_fn(sde_x, sde_adj,
       bs = shape_x[0]
       epsilon_x = mask_x(torch.randn_like(x), flags)
       epsilon_adj = mask_adjs(torch.randn_like(adj), flags)
+      if sde_adj.sym:
+         epsilon_adj = epsilon_adj.triu(1)
       epsilon = torch.concat((epsilon_x, epsilon_adj), -1)
 
       def ode_func(t, g):

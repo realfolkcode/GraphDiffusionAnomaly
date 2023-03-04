@@ -22,7 +22,8 @@ def collate_fn(graphs, max_node_num, dequantize):
 
     if dequantize:
         flags = node_flags(adjs_tensor)
-        noise = torch.rand_like(adjs_tensor) / 2
+        noise = (torch.rand_like(adjs_tensor) / 2).triu(1)
+        noise = noise + noise.transpose(-1, -2)
         adjs_tensor -= torch.sign(adjs_tensor - 0.5) * noise
         adjs_tensor = mask_adjs(adjs_tensor, flags)
 
