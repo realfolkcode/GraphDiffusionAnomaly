@@ -35,15 +35,15 @@ class AnomalyDataset(DGLDataset):
         # Create and store ego graphs
         self.ego_graphs = []
         for idx in tqdm(range(len(graph.nodes()))):
-            g = dgl.khop_out_subgraph(graph, idx, self.radius)[0]
-            g = self._sample_subgraph(g, self.max_node_num)
+            g, center_idx = dgl.khop_out_subgraph(graph, idx, self.radius)
+            g = self._sample_subgraph(g, center_idx, self.max_node_num)
             self.ego_graphs.append(g)
     
-    def _sample_subgraph(self, g, max_node_num):
+    def _sample_subgraph(self, g, center_idx, max_node_num):
         if len(g.nodes()) <= max_node_num:
             return g
         idx = []
-        for bfs_nodes in dgl.bfs_nodes_generator(g, 0):
+        for bfs_nodes in dgl.bfs_nodes_generator(g, center_idx):
             remaining = max_node_num - len(idx)
             if remaining <= 0:
                 break
