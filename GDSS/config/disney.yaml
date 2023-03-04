@@ -36,7 +36,6 @@ model:
   c_init: 2
   c_hid: 8
   c_final: 4
-  sym: True
   
 train:
   name: test

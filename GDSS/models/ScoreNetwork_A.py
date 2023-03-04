@@ -101,7 +101,7 @@ class BaselineNetwork(torch.nn.Module):
 class ScoreNetworkA(BaselineNetwork):
 
     def __init__(self, max_feat_num, max_node_num, nhid, num_layers, num_linears, 
-                    c_init, c_hid, c_final, adim, num_heads=4, conv='GCN', sym=True):
+                    c_init, c_hid, c_final, adim, num_heads=4, conv='GCN'):
 
         super(ScoreNetworkA, self).__init__(max_feat_num, max_node_num, nhid, num_layers, num_linears, 
                                             c_init, c_hid, c_final, adim, num_heads=4, conv='GCN')
@@ -137,9 +137,6 @@ class ScoreNetworkA(BaselineNetwork):
         
         self.mask = self.mask.to(score.device)
         score = score * self.mask
-
-        if self.sym:
-            score = (score + score.transpose(-1, -2)) / 2
 
         score = mask_adjs(score, flags)
 
