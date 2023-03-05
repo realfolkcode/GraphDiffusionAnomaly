@@ -109,7 +109,6 @@ class ScoreNetworkA(BaselineNetwork):
         self.adim = adim
         self.num_heads = num_heads
         self.conv = conv
-        self.sym = sym
 
         self.layers = torch.nn.ModuleList()
         self.layers.append(AttentionLayer(self.num_linears, self.nfeat, self.nhid, self.nhid, self.c_init, 
