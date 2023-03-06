@@ -3,6 +3,7 @@ import numpy as np
 from dgl.data import DGLDataset
 from pygod.utils import load_data
 import torch_geometric
+import torch
 from torch_geometric.utils import is_undirected
 from torch_geometric.transforms import ToUndirected
 from tqdm import tqdm
@@ -35,15 +36,22 @@ class AnomalyDataset(DGLDataset):
         # Create and store ego graphs
         self.ego_graphs = []
         for idx in tqdm(range(len(graph.nodes()))):
-            g, center_idx = dgl.khop_out_subgraph(graph, idx, self.radius)
+            g_out, _ = dgl.khop_out_subgraph(graph, idx, self.radius)
+            g_in, _ = dgl.khop_in_subgraph(graph, idx, self.radius)
+            ego_indices = torch.concat((g_out.ndata[dgl.NID], g_in.ndata[dgl.NID])).unique()
+
+            g = dgl.node_subgraph(graph, ego_indices)
+            center_idx = torch.argwhere(g.ndata[dgl.NID] == idx).item()
+
             g = self._sample_subgraph(g, center_idx, self.max_node_num)
             self.ego_graphs.append(g)
     
     def _sample_subgraph(self, g, center_idx, max_node_num):
         if len(g.nodes()) <= max_node_num:
             return g
+        g_undirected = dgl.to_bidirected(g)
         idx = []
-        for bfs_nodes in dgl.bfs_nodes_generator(g, center_idx):
+        for bfs_nodes in dgl.bfs_nodes_generator(g_undirected, center_idx):
             remaining = max_node_num - len(idx)
             if remaining <= 0:
                 break
