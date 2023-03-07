@@ -11,12 +11,13 @@ from ..utils.graph_utils import mask_adjs, mask_x
 # -------- From Baek et al. (2021) --------
 class Attention(torch.nn.Module):
 
-    def __init__(self, in_dim, attn_dim, out_dim, num_heads=4, conv='GCN'):
+    def __init__(self, in_dim, attn_dim, out_dim, num_heads=4, conv='GCN', sym=True):
         super(Attention, self).__init__()
         self.num_heads = num_heads
         self.attn_dim = attn_dim
         self.out_dim = out_dim
         self.conv = conv
+        self.sym = sym
 
         self.gnn_q, self.gnn_k, self.gnn_v = self.get_gnn(in_dim, attn_dim, out_dim, conv)
         self.activation = torch.tanh 
@@ -46,7 +47,8 @@ class Attention(torch.nn.Module):
         # -------- (B x num_heads) x N x N --------
         A = A.view(-1, *adj.shape)
         A = A.mean(dim=0)
-        A = (A + A.transpose(-1,-2))/2 
+        if self.sym:
+            A = (A + A.transpose(-1,-2))/2 
 
         return V, A 
 
@@ -75,15 +77,16 @@ class Attention(torch.nn.Module):
 class AttentionLayer(torch.nn.Module):
 
     def __init__(self, num_linears, conv_input_dim, attn_dim, conv_output_dim, input_dim, output_dim, 
-                    num_heads=4, conv='GCN'):
+                    num_heads=4, conv='GCN', sym=True):
 
         super(AttentionLayer, self).__init__()
+        self.sym= sym
 
         self.attn = torch.nn.ModuleList()
         for _ in range(input_dim):
             self.attn_dim =  attn_dim 
             self.attn.append(Attention(conv_input_dim, self.attn_dim, conv_output_dim,
-                                        num_heads=num_heads, conv=conv))
+                                        num_heads=num_heads, conv=conv, sym=sym))
 
         self.hidden_dim = 2*max(input_dim, output_dim)
         self.mlp = MLP(num_linears, 2*input_dim, self.hidden_dim, output_dim, use_bn=False, activate_func=F.elu)
@@ -110,7 +113,8 @@ class AttentionLayer(torch.nn.Module):
         shape = mlp_in.shape
         mlp_out = self.mlp(mlp_in.view(-1, shape[-1]))
         _adj = mlp_out.view(shape[0], shape[1], shape[2], -1).permute(0,3,1,2)
-        _adj = _adj + _adj.transpose(-1,-2)
+        if self.sym:
+            _adj = _adj + _adj.transpose(-1,-2)
         adj_out = mask_adjs(_adj, flags)
 
         return x_out, adj_out
