@@ -1,6 +1,6 @@
 import torch
 from .sde import VPSDE, VESDE, subVPSDE
-from .utils.graph_utils import node_flags, mask_x, mask_adjs, gen_noise
+from .utils.graph_utils import node_flags, mask_x, mask_adjs, gen_noise_adj, gen_noise_x
 
 
 def get_score_fn(sde, model, train=True, continuous=True):
@@ -47,12 +47,12 @@ def get_sde_loss_fn(sde_x, sde_adj, train=True, reduce_mean=False, continuous=Tr
     t = torch.rand(adj.shape[0], device=adj.device) * (sde_adj.T - eps) + eps
     flags = node_flags(adj)
 
-    z_x = gen_noise(x, flags, sym=False)
+    z_x = gen_noise_x(x, flags)
     mean_x, std_x = sde_x.marginal_prob(x, t)
     perturbed_x = mean_x + std_x[:, None, None] * z_x
     perturbed_x = mask_x(perturbed_x, flags)
 
-    z_adj = gen_noise(adj, flags, sym=sde_adj.sym) 
+    z_adj = gen_noise_adj(adj, flags, sym=sde_adj.sym) 
     mean_adj, std_adj = sde_adj.marginal_prob(adj, t)
     perturbed_adj = mean_adj + std_adj[:, None, None] * z_adj
     perturbed_adj = mask_adjs(perturbed_adj, flags)

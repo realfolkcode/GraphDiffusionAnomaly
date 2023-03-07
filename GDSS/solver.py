@@ -5,7 +5,7 @@ from tqdm import trange
 from scipy import integrate
 
 from .losses import get_score_fn
-from .utils.graph_utils import mask_adjs, mask_x, gen_noise
+from .utils.graph_utils import mask_adjs, mask_x, gen_noise_x, gen_noise_adj
 from .sde import VPSDE, subVPSDE
 
 
@@ -47,14 +47,14 @@ class EulerMaruyamaPredictor(Predictor):
     dt = -1. / self.rsde.N
 
     if self.obj=='x':
-      z = gen_noise(x, flags, sym=False)
+      z = gen_noise_x(x, flags)
       drift, diffusion = self.rsde.sde(x, adj, flags, t, is_adj=False)
       x_mean = x + drift * dt
       x = x_mean + diffusion[:, None, None] * np.sqrt(-dt) * z
       return x, x_mean
 
     elif self.obj=='adj':
-      z = gen_noise(adj, flags, sym=self.sde.sym)
+      z = gen_noise_adj(adj, flags, sym=self.sde.sym)
       drift, diffusion = self.rsde.sde(x, adj, flags, t, is_adj=True)
       adj_mean = adj + drift * dt
       adj = adj_mean + diffusion[:, None, None] * np.sqrt(-dt) * z
@@ -74,14 +74,14 @@ class ReverseDiffusionPredictor(Predictor):
 
     if self.obj == 'x':
       f, G = self.rsde.discretize(x, adj, flags, t, is_adj=False)
-      z = gen_noise(x, flags, sym=False)
+      z = gen_noise_x(x, flags)
       x_mean = x - f
       x = x_mean + G[:, None, None] * z
       return x, x_mean
 
     elif self.obj == 'adj':
       f, G = self.rsde.discretize(x, adj, flags, t, is_adj=True)
-      z = gen_noise(adj, flags, sym=self.sde.sym)
+      z = gen_noise_adj(adj, flags, sym=self.sde.sym)
       adj_mean = adj - f
       adj = adj_mean + G[:, None, None] * z
       return adj, adj_mean
@@ -127,7 +127,7 @@ class LangevinCorrector(Corrector):
     if self.obj == 'x':
       for i in range(n_steps):
         grad = score_fn(x, adj, flags, t)
-        noise = gen_noise(x, flags, sym=False)
+        noise = gen_noise_x(x, flags)
         grad_norm = torch.norm(grad.reshape(grad.shape[0], -1), dim=-1).mean()
         noise_norm = torch.norm(noise.reshape(noise.shape[0], -1), dim=-1).mean()
         step_size = (target_snr * noise_norm / grad_norm) ** 2 * 2 * alpha
@@ -138,7 +138,7 @@ class LangevinCorrector(Corrector):
     elif self.obj == 'adj':
       for i in range(n_steps):
         grad = score_fn(x, adj, flags, t)
-        noise = gen_noise(adj, flags, sym=self.sde.sym)
+        noise = gen_noise_adj(adj, flags, sym=self.sde.sym)
         grad_norm = torch.norm(grad.reshape(grad.shape[0], -1), dim=-1).mean()
         noise_norm = torch.norm(noise.reshape(noise.shape[0], -1), dim=-1).mean()
         step_size = (target_snr * noise_norm / grad_norm) ** 2 * 2 * alpha
@@ -247,7 +247,7 @@ def S4_solver(sde_x, sde_adj, shape_x, shape_adj, predictor='None', corrector='N
         # -------- Correction step --------
         timestep = (vec_t * (sde_x.N - 1) / sde_x.T).long()
 
-        noise = gen_noise(x, flags, sym=False)
+        noise = gen_noise_x(x, flags)
         grad_norm = torch.norm(score_x.reshape(score_x.shape[0], -1), dim=-1).mean()
         noise_norm = torch.norm(noise.reshape(noise.shape[0], -1), dim=-1).mean()
         if isinstance(sde_x, VPSDE):
@@ -259,7 +259,7 @@ def S4_solver(sde_x, sde_adj, shape_x, shape_adj, predictor='None', corrector='N
         x_mean = x + step_size[:, None, None] * score_x
         x = x_mean + torch.sqrt(step_size * 2)[:, None, None] * noise * scale_eps
 
-        noise = gen_noise(adj, flags, sym=sde_adj.sym)
+        noise = gen_noise_adj(adj, flags, sym=sde_adj.sym)
         grad_norm = torch.norm(score_adj.reshape(score_adj.shape[0], -1), dim=-1).mean()
         noise_norm = torch.norm(noise.reshape(noise.shape[0], -1), dim=-1).mean()
         if isinstance(sde_adj, VPSDE):
@@ -275,16 +275,16 @@ def S4_solver(sde_x, sde_adj, shape_x, shape_adj, predictor='None', corrector='N
         adj_mean = adj
         mu_x, sigma_x = sde_x.transition(x, vec_t, vec_dt)
         mu_adj, sigma_adj = sde_adj.transition(adj, vec_t, vec_dt) 
-        x = mu_x + sigma_x[:, None, None] * gen_noise(x, flags, sym=False)
-        adj = mu_adj + sigma_adj[:, None, None] * gen_noise(adj, flags, sym=sde_adj.sym)
+        x = mu_x + sigma_x[:, None, None] * gen_noise_x(x, flags)
+        adj = mu_adj + sigma_adj[:, None, None] * gen_noise_adj(adj, flags, sym=sde_adj.sym)
         
         x = x + Sdrift_x * dt
         adj = adj + Sdrift_adj * dt
 
         mu_x, sigma_x = sde_x.transition(x, vec_t + vec_dt, vec_dt) 
         mu_adj, sigma_adj = sde_adj.transition(adj, vec_t + vec_dt, vec_dt) 
-        x = mu_x + sigma_x[:, None, None] * gen_noise(x, flags, sym=False)
-        adj = mu_adj + sigma_adj[:, None, None] * gen_noise(adj, flags, sym=sde_adj.sym)
+        x = mu_x + sigma_x[:, None, None] * gen_noise_x(x, flags)
+        adj = mu_adj + sigma_adj[:, None, None] * gen_noise_adj(adj, flags, sym=sde_adj.sym)
 
         x_mean = mu_x
         adj_mean = mu_adj

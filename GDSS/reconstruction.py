@@ -3,7 +3,7 @@ import torch
 from GDSS.utils.loader import load_device, load_seed, load_model_from_ckpt, \
                               load_ema_from_ckpt, load_ckpt, load_sampling_fn, \
                               load_batch, load_sde
-from GDSS.utils.graph_utils import node_flags, gen_noise, mask_x, mask_adjs, \
+from GDSS.utils.graph_utils import node_flags, gen_noise_x, gen_noise_adj, mask_x, mask_adjs, \
                                    quantize
 
 
@@ -41,12 +41,12 @@ class Reconstructor(torch.nn.Module):
         t = torch.ones(adj.shape[0], device=adj.device) * self.sde_adj.T
         flags = node_flags(adj)
 
-        z_x = gen_noise(x, flags, sym=False)
+        z_x = gen_noise_x(x, flags)
         mean_x, std_x = self.sde_x.marginal_prob(x, t)
         perturbed_x = mean_x + std_x[:, None, None] * z_x
         perturbed_x = mask_x(perturbed_x, flags)
 
-        z_adj = gen_noise(adj, flags, sym=self.sde_adj.sym) 
+        z_adj = gen_noise_adj(adj, flags, sym=self.sde_adj.sym) 
         mean_adj, std_adj = self.sde_adj.marginal_prob(adj, t)
         perturbed_adj = mean_adj + std_adj[:, None, None] * z_adj
         perturbed_adj = mask_adjs(perturbed_adj, flags)

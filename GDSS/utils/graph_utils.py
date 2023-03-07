@@ -80,15 +80,22 @@ def init_flags(graph_list, config, batch_size=None):
     return flags
 
 
-# -------- Generate noise --------
-def gen_noise(x, flags, sym=True):
+# -------- Generate noise for adj matrices --------
+def gen_noise_adj(x, flags, sym=True):
     z = torch.randn_like(x)
     if sym:
         z = z.triu(1)
         z = z + z.transpose(-1,-2)
         z = mask_adjs(z, flags)
     else:
-        z = mask_x(z, flags)
+        z = z - torch.eye(z.shape[-1])
+        z = mask_adjs(z, flags)
+    return z
+
+# -------- Generate noise for feature matrices --------
+def gen_noise_x(x, flags):
+    z = torch.randn_like(x)
+    z = mask_x(z, flags)
     return z
 
 

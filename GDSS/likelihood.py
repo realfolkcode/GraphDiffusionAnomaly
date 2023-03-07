@@ -6,7 +6,7 @@ from GDSS.losses import get_score_fn
 from GDSS.utils.loader import load_device, load_seed, load_model_from_ckpt, \
                               load_ema_from_ckpt, load_ckpt, load_sampling_fn, \
                               load_batch, load_sde
-from GDSS.utils.graph_utils import node_flags, gen_noise, mask_x, mask_adjs, \
+from GDSS.utils.graph_utils import node_flags, mask_x, mask_adjs, \
                                    quantize, count_nodes
 
 
