@@ -32,7 +32,9 @@ def mask_adjs(adjs, flags):
 # -------- Create flags tensor from graph dataset --------
 def node_flags(adj, eps=1e-5):
 
-    flags = torch.abs(adj).sum(-1).gt(eps).to(dtype=torch.float32)
+    flags_row = torch.abs(adj).sum(-1).gt(eps)
+    flags_col = torch.abs(adj).sum(-2).gt(eps)
+    flags = torch.logical_or(flags_row, flags_col).to(dtype=torch.float32)
 
     if len(flags.shape)==3:
         flags = flags[:,0,:]
