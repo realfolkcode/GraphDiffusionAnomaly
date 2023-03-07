@@ -88,7 +88,7 @@ def gen_noise_adj(x, flags, sym=True):
         z = z + z.transpose(-1,-2)
         z = mask_adjs(z, flags)
     else:
-        z = z - torch.eye(z.shape[-1])
+        z = z - torch.eye(z.shape[-1]).to(z.device)
         z = mask_adjs(z, flags)
     return z
 
