@@ -90,7 +90,7 @@ def get_likelihood_fn(sde_x, sde_adj,
       init = np.concatenate([to_flattened_numpy(x),
                              to_flattened_numpy(adj), 
                              np.zeros((bs,))], axis=0)
-      solution = integrate.solve_ivp(ode_func, (eps, sde_x.T), init, rtol=rtol, atol=atol, method=method)
+      solution = integrate.solve_ivp(ode_func, (eps, sde_x.T), init, t_eval=[eps], rtol=rtol, atol=atol, method=method)
       zp = solution.y[:, -1]
       len_flat_x = shape_x[0] * shape_x[1] * shape_x[2]
       z_x = from_flattened_numpy(zp[:len_flat_x], shape_x).to(x.device).type(torch.float32)
