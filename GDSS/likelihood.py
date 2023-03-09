@@ -1,4 +1,5 @@
 import torch
+import torchode
 import numpy as np
 from scipy import integrate
 
@@ -70,32 +71,36 @@ def get_likelihood_fn(sde_x, sde_adj,
       epsilon = torch.concat((epsilon_x, epsilon_adj), -1)
 
       def ode_func(t, g):
-        len_flat_x = shape_x[0] * shape_x[1] * shape_x[2]
-        xx = g[:len_flat_x]
-        aa = g[len_flat_x:-bs]
-        xx = from_flattened_numpy(xx, shape_x).to(x.device).type(torch.float32)
-        aa = from_flattened_numpy(aa, shape_adj).to(adj.device).type(torch.float32)
+        len_flat_x = shape_x[1] * shape_x[2]
+        xx = g[:, :len_flat_x].reshape(shape_x)
+        aa = g[:, len_flat_x:-1].reshape(shape_adj)
 
         vec_t = torch.ones(bs, device=x.device) * t
 
         drift_x = drift_fn(model_x, xx, aa, flags, vec_t, is_adj=False)
-        drift_x = to_flattened_numpy(drift_x)
+        drift_x = drift_x.reshape((bs, -1))
         drift_adj = drift_fn(model_adj, xx, aa, flags, vec_t, is_adj=True)
-        drift_adj = to_flattened_numpy(drift_adj)
-        drift = np.concatenate((drift_x, drift_adj))
+        drift_adj = drift_adj.reshape((bs, -1))
+        drift = torch.concat((drift_x, drift_adj), -1)
 
-        logp_grad = to_flattened_numpy(div_fn(model_x, model_adj, xx, aa, flags, vec_t, epsilon))
-        return np.concatenate([drift, logp_grad], axis=0)
+        logp_grad = div_fn(model_x, model_adj, xx, aa, flags, vec_t, epsilon).reshape((bs, -1))
+        return torch.concat((drift, logp_grad), -1)
 
-      init = np.concatenate([to_flattened_numpy(x),
-                             to_flattened_numpy(adj), 
-                             np.zeros((bs,))], axis=0)
-      solution = integrate.solve_ivp(ode_func, (eps, sde_x.T), init, t_eval=[eps], rtol=rtol, atol=atol, method=method)
-      zp = solution.y[:, -1]
-      len_flat_x = shape_x[0] * shape_x[1] * shape_x[2]
-      z_x = from_flattened_numpy(zp[:len_flat_x], shape_x).to(x.device).type(torch.float32)
-      z_adj = from_flattened_numpy(zp[len_flat_x:-bs], shape_adj).to(adj.device).type(torch.float32)
-      delta_logp = from_flattened_numpy(zp[-bs:], (bs,)).to(x.device).type(torch.float32)
+      init = torch.concat([x.reshape((bs, -1)),
+                           adj.reshape((bs, -1)), 
+                           torch.zeros((bs, 1)).to(x.device)], axis=-1)
+      term = torchode.ODETerm(ode_func)
+      step_size_controller = torchode.IntegralController(atol=atol, rtol=rtol, term=term)
+
+      solution = torchode.solve_ivp(term, init, 
+                                    t_span=torch.Tensor([eps, sde_x.T]).to(init.device), 
+                                    t_eval=torch.Tensor([eps]).to(init.device), 
+                                    controller=step_size_controller)
+      zp = solution.ys.squeeze()
+      len_flat_x = shape_x[1] * shape_x[2]
+      z_x = zp[:, :len_flat_x].reshape(x.shape)
+      z_adj = zp[:, len_flat_x:-1].reshape(adj.shape)
+      delta_logp = zp[:, -1]
 
       num_nodes = count_nodes(adj)
       N_x = num_nodes * shape_x[-1]
@@ -150,4 +155,3 @@ class LikelihoodEstimator(torch.nn.Module):
             likelihood = likelihood + self.likelihood_fn(self.model_x, self.model_adj, x, adj, flags)
         likelihood /= self.num_sample
         return likelihood
-        
