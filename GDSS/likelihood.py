@@ -92,11 +92,11 @@ def get_likelihood_fn(sde_x, sde_adj,
       term = torchode.ODETerm(ode_func)
       step_size_controller = torchode.IntegralController(atol=atol, rtol=rtol, term=term)
 
+      t_eval = torch.Tensor([eps, sde_x.T]).repeat((bs,1)).to(init.device)
       solution = torchode.solve_ivp(term, init, 
-                                    t_span=torch.Tensor([eps, sde_x.T]).to(init.device), 
-                                    t_eval=torch.Tensor([eps]).to(init.device), 
+                                    t_eval=t_eval, 
                                     controller=step_size_controller)
-      zp = solution.ys.squeeze()
+      zp = solution.ys[:, -1, :]
       len_flat_x = shape_x[1] * shape_x[2]
       z_x = zp[:, :len_flat_x].reshape(x.shape)
       z_adj = zp[:, len_flat_x:-1].reshape(adj.shape)
