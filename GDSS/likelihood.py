@@ -14,21 +14,21 @@ from GDSS.utils.graph_utils import node_flags, mask_x, mask_adjs, \
 def get_div_fn(fn_x, fn_adj):
   """Create the divergence function of `fn` using the Hutchinson-Skilling trace estimator."""
 
-  def div_fn(x, adj, t, eps):
+  def div_fn(x, adj, t, eps_x, eps_adj):
     with torch.enable_grad():
       x.requires_grad_(True)
       adj.requires_grad_(True)
       xx = fn_x(x, adj, t)
       aa = fn_adj(x, adj, t)
-      fn_res = torch.concat((xx, aa), -1)
-      fn_eps = torch.sum(fn_res * eps)
-      grad_fn_eps = torch.autograd.grad(fn_eps, (x, adj))
-      grad_fn_eps = torch.concat((grad_fn_eps[0],
-                                  grad_fn_eps[1]), -1)
+      fn_eps_x = torch.sum(xx * eps_x)
+      grad_fn_eps_x = torch.autograd.grad(fn_eps_x, x)[0]
+      fn_eps_adj = torch.sum(adj * eps_adj)
+      grad_fn_eps_adj = torch.autograd.grad(fn_eps_adj, adj)[0]
+      div = torch.sum(grad_fn_eps_x * eps_x, dim=[1,2]) + torch.sum(grad_fn_eps_adj * eps_adj, dim=[1,2])
     x.requires_grad_(False)
     adj.requires_grad_(False)
     
-    return torch.sum(grad_fn_eps * eps, dim=tuple(range(1, len(x.shape))))
+    return div
 
   return div_fn
 
@@ -55,9 +55,9 @@ def get_likelihood_fn(sde_x, sde_adj,
       rsde = sde_x.reverse(score_fn, probability_flow=True)
       return rsde.sde(x, adj, flags, t, is_adj=False)[0]
 
-  def div_fn(model_x, model_adj, x, adj, flags, t, noise):
+  def div_fn(model_x, model_adj, x, adj, flags, t, noise_x, noise_adj):
     return get_div_fn(lambda xx, aa, tt: drift_fn(model_x, xx, aa, flags, tt, False),
-                      lambda xx, aa, tt: drift_fn(model_adj, xx, aa, flags, tt, True))(x, adj, t, noise)
+                      lambda xx, aa, tt: drift_fn(model_adj, xx, aa, flags, tt, True))(x, adj, t, noise_x, noise_adj)
 
   def likelihood_fn(model_x, model_adj, x, adj, flags):
     with torch.no_grad():
@@ -68,7 +68,6 @@ def get_likelihood_fn(sde_x, sde_adj,
       epsilon_adj = mask_adjs(torch.randn_like(adj), flags)
       if sde_adj.sym:
          epsilon_adj = epsilon_adj.triu(1)
-      epsilon = torch.concat((epsilon_x, epsilon_adj), -1)
 
       def ode_func(t, g):
         len_flat_x = shape_x[1] * shape_x[2]
@@ -83,7 +82,7 @@ def get_likelihood_fn(sde_x, sde_adj,
         drift_adj = drift_adj.reshape((bs, -1))
         drift = torch.concat((drift_x, drift_adj), -1)
 
-        logp_grad = div_fn(model_x, model_adj, xx, aa, flags, vec_t, epsilon).reshape((bs, -1))
+        logp_grad = div_fn(model_x, model_adj, xx, aa, flags, vec_t, epsilon_x, epsilon_adj).reshape((bs, -1))
         return torch.concat((drift, logp_grad), -1)
 
       init = torch.concat([x.reshape((bs, -1)),
