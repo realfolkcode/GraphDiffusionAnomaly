@@ -3,6 +3,7 @@ import time
 from tqdm import tqdm, trange
 import numpy as np
 import torch
+import yaml
 
 from .utils.loader import load_seed, load_device, load_data, load_model_params, load_model_optimizer, \
                          load_ema, load_loss_fn, load_batch
@@ -95,6 +96,10 @@ class Trainer(object):
             # -------- Save checkpoints --------
             if epoch % self.config.train.save_interval == self.config.train.save_interval-1:
                 save_name = f'_{epoch+1}' if epoch < self.config.train.num_epochs - 1 else ''
+
+                # -------- Save config ----------
+                with open(f'./checkpoints/{self.config.data.data}/{self.ckpt + save_name}.yaml', 'w') as f:
+                    yaml.dump(self.config, f)
 
                 torch.save({ 
                     'model_config': self.config,
