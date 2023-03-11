@@ -22,7 +22,6 @@ def load_seed(seed):
         torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
-    torch.set_num_threads(1)
 
     return seed
 
