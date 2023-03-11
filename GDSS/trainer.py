@@ -8,6 +8,7 @@ import yaml
 from .utils.loader import load_seed, load_device, load_data, load_model_params, load_model_optimizer, \
                          load_ema, load_loss_fn, load_batch
 from .utils.logger import Logger, set_log, start_log, train_log
+from .parsers.config import save_config
 
 
 class Trainer(object):
@@ -98,8 +99,7 @@ class Trainer(object):
                 save_name = f'_{epoch+1}' if epoch < self.config.train.num_epochs - 1 else ''
 
                 # -------- Save config ----------
-                with open(f'./checkpoints/{self.config.data.data}/{self.ckpt + save_name}.yaml', 'w') as f:
-                    yaml.dump(self.config, f)
+                save_config(self.config, f'./checkpoints/{self.config.data.data}/{self.ckpt + save_name}.yaml')
 
                 torch.save({ 
                     'model_config': self.config,
