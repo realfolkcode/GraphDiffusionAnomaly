@@ -104,8 +104,8 @@ def get_likelihood_fn(sde_x, sde_adj,
       delta_logp = zp[:, -1]
 
       num_nodes = count_nodes(adj)
-      N_x = num_nodes * shape_x[-1]
-      N_adj = num_nodes**2 - num_nodes
+      N_x = shape_x[-2] * shape_x[-1]
+      N_adj = shape_adj[-2]**2 - shape_adj[-2]
       if sde_adj.sym:
           prior_logp = sde_x.prior_logp(z_x, N_x) + sde_adj.prior_logp(z_adj, N_adj) / 2
       else:
