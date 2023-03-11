@@ -98,9 +98,6 @@ class Trainer(object):
             if epoch % self.config.train.save_interval == self.config.train.save_interval-1:
                 save_name = f'_{epoch+1}' if epoch < self.config.train.num_epochs - 1 else ''
 
-                # -------- Save config ----------
-                save_config(self.config, f'./checkpoints/{self.config.data.data}/{self.ckpt + save_name}.yaml')
-
                 torch.save({ 
                     'model_config': self.config,
                     'params_x' : self.params_x,
