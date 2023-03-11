@@ -1,6 +1,5 @@
 import yaml
 from easydict import EasyDict as edict
-from copy import deepcopy
 
 
 def get_config(config_path, seed):
