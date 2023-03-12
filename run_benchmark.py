@@ -98,4 +98,5 @@ if __name__=="__main__":
     parser.add_argument('--seed', type=int, default=42, required=False, help='rng seed value')
     parser.add_argument('--is_likelihood', type=bool, default=False, required=False, help='compute anomaly scores as likelihood')
     args = parser.parse_args()
+    torch.set_num_threads(1)
     run_benchmark(args)
