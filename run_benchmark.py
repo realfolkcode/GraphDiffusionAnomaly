@@ -30,6 +30,7 @@ def run_experiment(config, dataset, exp_name, **kwargs):
     else:
         ckpt_path = f'./checkpoints/{config.data.data}/{exp_name}.pth'
         config = torch.load(ckpt_path)['model_config']
+        config.ckpt = exp_name
 
     # Inference
     if is_likelihood:
