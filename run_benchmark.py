@@ -18,13 +18,18 @@ def run_experiment(config, dataset, exp_name, **kwargs):
     num_sample = kwargs['num_sample']
     num_steps = kwargs['num_steps']
     is_likelihood = kwargs['is_likelihood']
+    skip_training = kwargs['skip_training']
 
     # Train GDSS
-    trainer = Trainer(config)
-    train_loader = dataloader(config, dataset, drop_last=False)
-    trainer.train_loader = train_loader
-    ckpt = trainer.train(exp_name)
-    config.ckpt = ckpt
+    if not skip_training:
+        trainer = Trainer(config)
+        train_loader = dataloader(config, dataset, drop_last=False)
+        trainer.train_loader = train_loader
+        ckpt = trainer.train(exp_name)
+        config.ckpt = ckpt
+    else:
+        ckpt_path = f'./checkpoints/{config.data.data}/{exp_name}.pth'
+        config = torch.load(ckpt_path)['model_config']
 
     # Inference
     if is_likelihood:
@@ -82,6 +87,7 @@ def run_benchmark(args):
         print(f'Feature dimension: {config.data.max_feat_num}')
         
         config = draw_hyperparameters(config, dataset_name, i)
+        
         run_experiment(config, dataset, f'{exp_name}_{i}', 
                        trajectory_sample=args.trajectory_sample, num_sample=args.num_sample,
                        num_steps=args.num_steps, is_likelihood=args.is_likelihood)
@@ -97,6 +103,7 @@ if __name__=="__main__":
     parser.add_argument('--num_steps', type=int, default=100, required=False, help='number of sampling steps')
     parser.add_argument('--seed', type=int, default=42, required=False, help='rng seed value')
     parser.add_argument('--is_likelihood', type=bool, default=False, required=False, help='compute anomaly scores as likelihood')
+    parser.add_argument('--skip_training', type=bool, default=False, required=False, help='skip training and use existing models')
     args = parser.parse_args()
     torch.set_num_threads(1)
     run_benchmark(args)
