@@ -90,7 +90,8 @@ def run_benchmark(args):
         
         run_experiment(config, dataset, f'{exp_name}_{i}', 
                        trajectory_sample=args.trajectory_sample, num_sample=args.num_sample,
-                       num_steps=args.num_steps, is_likelihood=args.is_likelihood)
+                       num_steps=args.num_steps, is_likelihood=args.is_likelihood,
+                       skip_training=args.skip_training)
 
 
 if __name__=="__main__":
