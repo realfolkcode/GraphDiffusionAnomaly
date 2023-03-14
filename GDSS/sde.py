@@ -148,7 +148,7 @@ class VPSDE(SDE):
     return x + x.transpose(-1,-2)
 
   def prior_logp(self, z, N):
-    if N is None:
+    if N is not None:
         logps = -N / 2. * np.log(2 * np.pi) - torch.sum(z ** 2, dim=(1, 2)) / 2.
     else:
         logps = -torch.sum(z ** 2, dim=(1, 2)) / 2.
