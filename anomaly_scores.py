@@ -111,7 +111,12 @@ def save_likelihood_scores(config, dataset, exp_name, num_sample):
                         dequantize=True)
     data_len = len(dataset)
 
-    scores = torch.zeros(data_len)
+    prior_constant_x = torch.zeros(data_len)
+    prior_constant_adj = torch.zeros(data_len)
+    prior_logp_x = torch.zeros(data_len)
+    prior_logp_adj = torch.zeros(data_len)
+    delta_logp = torch.zeros(data_len)
+    
     batch_start_pos = 0
     for i, batch in tqdm(enumerate(loader)):
         x = batch[0]
@@ -120,9 +125,18 @@ def save_likelihood_scores(config, dataset, exp_name, num_sample):
         bs = x.shape[0]
         batch_end_pos = batch_start_pos + bs
 
-        scores[batch_start_pos:batch_end_pos] = likelihood_estimator(batch)
+        likelihood_components = likelihood_estimator(batch)
+        prior_constant_x[batch_start_pos:batch_end_pos] = likelihood_components[0]
+        prior_constant_adj[batch_start_pos:batch_end_pos] = likelihood_components[1]
+        prior_logp_x[batch_start_pos:batch_end_pos] = likelihood_components[2]
+        prior_logp_adj[batch_start_pos:batch_end_pos] = likelihood_components[3]
+        delta_logp[batch_start_pos:batch_end_pos] = likelihood_components[4]
 
         batch_start_pos = batch_end_pos
 
     with open(f'{exp_name}_final_scores.npy', 'wb') as f:
-        np.save(f, scores.numpy())
+        np.save(f, prior_constant_x.numpy())
+        np.save(f, prior_constant_adj.numpy())
+        np.save(f, prior_logp_x.numpy())
+        np.save(f, prior_logp_adj.numpy())
+        np.save(f, delta_logp.numpy())

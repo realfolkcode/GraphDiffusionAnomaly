@@ -103,16 +103,23 @@ def get_likelihood_fn(sde_x, sde_adj,
       z_adj = zp[:, len_flat_x:-1].reshape(adj.shape)
       delta_logp = zp[:, -1]
 
+      # Calculate normalization constant for prior
       num_nodes = count_nodes(adj)
-      N_x = shape_x[-2] * shape_x[-1]
-      N_adj = shape_adj[-2]**2 - shape_adj[-2]
+      N_x = num_nodes * shape_x[-1]
+      N_adj = num_nodes**2 - num_nodes
+      prior_constant_x = -N_x / 2. * np.log(2 * np.pi)
+      prior_constant_adj = -N_adj / 2. * np.log(2 * np.pi)
       if sde_adj.sym:
-          prior_logp = sde_x.prior_logp(z_x, N_x) + sde_adj.prior_logp(z_adj, N_adj) / 2
-      else:
-          prior_logp = sde_x.prior_logp(z_x, N_x) + sde_adj.prior_logp(z_adj, N_adj)
+          prior_constant_adj /= 2  
 
-      nll = -(prior_logp + delta_logp)
-      return nll
+      # Calculate unnormalized prior
+      prior_logp_x = sde_x.prior_logp(z_x, N=None)
+      prior_logp_adj = sde_adj.prior_logp(z_adj, N=None)
+      if sde_adj.sym:
+          prior_logp_adj /= 2
+
+      # nll = -(prior_constant_x prior_logp_x + prior_constant_adj + prior_log_adj + delta_logp)
+      return [prior_constant_x, prior_constant_adj, prior_logp_x, prior_logp_adj, delta_logp]
 
   return likelihood_fn
 
@@ -151,8 +158,25 @@ class LikelihoodEstimator(torch.nn.Module):
     def forward(self, batch):
         x, adj = load_batch(batch, self.device)
         flags = node_flags(adj)
-        likelihood = 0
+
+        prior_constant_x = 0
+        prior_constant_adj = 0
+        prior_logp_x = 0
+        prior_logp_adj = 0
+        delta_logp = 0
+
         for i in range(self.num_sample):
-            likelihood = likelihood + self.likelihood_fn(self.model_x, self.model_adj, x, adj, flags)
-        likelihood /= self.num_sample
-        return likelihood
+            likelihood_components = self.likelihood_fn(self.model_x, self.model_adj, x, adj, flags)
+            prior_constant_x += likelihood_components[0]
+            prior_constant_adj += likelihood_components[1]
+            prior_logp_x += likelihood_components[2]
+            prior_logp_adj += likelihood_components[3]
+            delta_logp += likelihood_components[4]
+
+        prior_constant_x /= self.num_sample
+        prior_constant_adj /= self.num_sample
+        prior_logp_x /= self.num_sample
+        prior_logp_adj /= self.num_sample
+        delta_logp /= self.num_sample
+
+        return [prior_constant_x, prior_constant_adj, prior_logp_x, prior_logp_adj, delta_logp]
