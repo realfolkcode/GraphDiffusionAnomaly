@@ -22,7 +22,7 @@ def get_div_fn(fn_x, fn_adj):
       aa = fn_adj(x, adj, t)
       fn_eps_x = torch.sum(xx * eps_x)
       grad_fn_eps_x = torch.autograd.grad(fn_eps_x, x)[0]
-      fn_eps_adj = torch.sum(adj * eps_adj)
+      fn_eps_adj = torch.sum(aa * eps_adj)
       grad_fn_eps_adj = torch.autograd.grad(fn_eps_adj, adj)[0]
       div = torch.sum(grad_fn_eps_x * eps_x, dim=[1,2]) + torch.sum(grad_fn_eps_adj * eps_adj, dim=[1,2])
     x.requires_grad_(False)
