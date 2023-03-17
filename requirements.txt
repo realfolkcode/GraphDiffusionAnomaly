@@ -1,6 +1,6 @@
 tqdm
 pyyaml
-sklearn
+#sklearn
 pandas>=1.1.5
 cycler>=0.10.0
 easydict>=1.9
