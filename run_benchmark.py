@@ -37,7 +37,7 @@ def run_experiment(config, dataset, exp_name, **kwargs):
         save_likelihood_scores(config, dataset, exp_name, num_sample)
     else:
         save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample, 
-                          num_steps, save_intermediate=False)
+                          num_steps)
 
 
 def draw_hyperparameters(config, dataset_name, exp_num):
