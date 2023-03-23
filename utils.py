@@ -14,7 +14,7 @@ def calculate_snr(T_lst, config_sde, eps=1e-7):
     if sde_type == 'VP':
         beta_min = config_sde.beta_min
         beta_max = config_sde.beta_max
-        integral = beta_min * T_lst - (beta_max - beta_min) / 2 * T_lst**2
+        integral = -beta_min * T_lst - (beta_max - beta_min) / 2 * T_lst**2
         mu_squared = np.exp(integral)
         sigma_squared = 1 - np.exp(integral)
         return mu_squared / (sigma_squared + eps)
