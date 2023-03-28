@@ -12,16 +12,16 @@ from utils import standardize
 
 
 class AnomalyDataset(DGLDataset):
-    def __init__(self, name, radius=1):
+    def __init__(self, name, radius=1, undirected=True):
         self.radius = radius
+        self.undirected = undirected
         super().__init__(name=name)
     
     def process(self):
         data = load_data(self.name)
 
-        if not is_undirected(data['edge_index']):
+        if self.undirected:
             data = ToUndirected()(data)
-        assert is_undirected(data['edge_index'])
 
         data['x'] = standardize(data['x'])
 

@@ -71,7 +71,7 @@ def run_benchmark(args):
     # Load dataset
     radius = args.radius
     dataset_name = config.data.data
-    dataset = AnomalyDataset(dataset_name, radius=radius)
+    dataset = AnomalyDataset(dataset_name, radius=radius, undirected=config.model.sym)
     print(f'Dataset: {dataset_name}')
     print(f'Number of nodes: {len(dataset)}')
 
