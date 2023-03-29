@@ -59,7 +59,10 @@ class Trainer(object):
 
                 self.optimizer_x.zero_grad()
                 self.optimizer_adj.zero_grad()
-                x, adj, pe = load_batch(train_b, self.device) 
+                
+                x, adj, pe = load_batch(train_b, self.device)
+                uncond_probs = np.random.rand(pe.shape[0])
+                pe[np.where(uncond_probs) < 0.5] = 0
                 loss_subject = (x, adj, pe)
 
                 loss_x, loss_adj = self.loss_fn(self.model_x, self.model_adj, *loss_subject)
