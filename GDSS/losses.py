@@ -3,7 +3,7 @@ from .sde import VPSDE, VESDE, subVPSDE
 from .utils.graph_utils import node_flags, mask_x, mask_adjs, gen_noise_adj, gen_noise_x
 
 
-def get_score_fn(sde, model, train=True, continuous=True):
+def get_score_fn(sde, model, train=True, continuous=True, guidance=1):
 
   if not train:
     model.eval()
@@ -13,10 +13,12 @@ def get_score_fn(sde, model, train=True, continuous=True):
     def score_fn(x, adj, flags, t, pe):
       # Scale neural network output by standard deviation and flip sign
       if continuous:
-        score = model_fn(x, adj, flags, pe)
+        cond_score = model_fn(x, adj, flags, pe)
+        uncond_score = model_fn(x, adj, flags, torch.zeros_like(pe))
         std = sde.marginal_prob(torch.zeros_like(adj), t)[1]
       else:
         raise NotImplementedError(f"Discrete not supported")
+      score = (1 + guidance) * cond_score - guidance * uncond_score
       score = -score / std[:, None, None]
       return score
 
