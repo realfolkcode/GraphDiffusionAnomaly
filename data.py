@@ -4,6 +4,7 @@ from dgl.data import DGLDataset
 from pygod.utils import load_data
 import torch_geometric
 import torch
+import torch.nn.functional as F
 from torch_geometric.utils import is_undirected
 from torch_geometric.transforms import ToUndirected
 from tqdm import tqdm
@@ -12,7 +13,8 @@ from utils import standardize
 
 
 class AnomalyDataset(DGLDataset):
-    def __init__(self, name, radius=1, undirected=True):
+    def __init__(self, name, num_partition, radius=1, undirected=True):
+        self.num_partition = num_partition
         self.radius = radius
         self.undirected = undirected
         super().__init__(name=name)
@@ -29,6 +31,8 @@ class AnomalyDataset(DGLDataset):
                   torch_geometric.utils.to_networkx(data,
                                                     node_attrs=['x']),
                   node_attrs=['x'])
+        
+        self._create_pe(graph)
 
         self.feat_dim = graph.ndata['x'].shape[1]
         self._adjust_max_node_num(graph)
@@ -45,6 +49,14 @@ class AnomalyDataset(DGLDataset):
 
             g = self._sample_subgraph(g, center_idx, self.max_node_num)
             self.ego_graphs.append(g)
+    
+    def _create_pe(self, graph):
+        self.pe = torch.zeros(graph.num_nodes()).long()
+        partition = dgl.metis_partition(graph, k=self.num_partition, reshuffle=False)
+        for part_idx in partition:
+            part_graph = partition[part_idx]
+            self.pe[part_graph.ndata['_ID']] = part_idx
+        self.pe = F.one_hot(self.pe)
     
     def _sample_subgraph(self, g, center_idx, max_node_num):
         if len(g.nodes()) <= max_node_num:
