@@ -6,6 +6,7 @@ data:
   max_node_num: 15
   max_feat_num: 64
   init: deg
+  num_partition: 4
 
 sde:
   x: 

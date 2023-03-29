@@ -20,7 +20,8 @@ def main(args):
 
     # Load dataset
     dataset_name = config.data.data
-    dataset = AnomalyDataset(dataset_name, radius=1, undirected=config.model.sym)
+    num_partition = config.data.num_partition
+    dataset = AnomalyDataset(dataset_name, num_partition=num_partition, radius=1, undirected=config.model.sym)
     print(f'Dataset: {dataset_name}')
     print(f'Number of nodes: {len(dataset)}')
 
