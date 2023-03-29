@@ -97,7 +97,7 @@ class NoneCorrector(Corrector):
     self.obj = obj
     pass
 
-  def update_fn(self, x, adj, flags, t):
+  def update_fn(self, x, adj, flags, t, pe):
     if self.obj == 'x':
       return x, x
     elif self.obj == 'adj':
