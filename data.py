@@ -51,12 +51,13 @@ class AnomalyDataset(DGLDataset):
             self.ego_graphs.append(g)
     
     def _create_pe(self, graph):
-        self.pe = torch.zeros(graph.num_nodes()).long()
+        pe = torch.zeros(graph.num_nodes()).long()
         partition = dgl.metis_partition(graph, k=self.num_partition, reshuffle=False)
         for part_idx in partition:
             part_graph = partition[part_idx]
-            self.pe[part_graph.ndata['_ID']] = part_idx
-        self.pe = F.one_hot(self.pe)
+            pe[part_graph.ndata['_ID']] = part_idx
+        pe = F.one_hot(pe)
+        graph.ndata['pe'] = pe
     
     def _sample_subgraph(self, g, center_idx, max_node_num):
         if len(g.nodes()) <= max_node_num:
