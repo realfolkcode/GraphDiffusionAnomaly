@@ -43,19 +43,19 @@ class EulerMaruyamaPredictor(Predictor):
     super().__init__(sde, score_fn, probability_flow)
     self.obj = obj
 
-  def update_fn(self, x, adj, flags, t):
+  def update_fn(self, x, adj, flags, t, pe):
     dt = -1. / self.rsde.N
 
     if self.obj=='x':
       z = gen_noise_x(x, flags)
-      drift, diffusion = self.rsde.sde(x, adj, flags, t, is_adj=False)
+      drift, diffusion = self.rsde.sde(x, adj, flags, t, pe, is_adj=False)
       x_mean = x + drift * dt
       x = x_mean + diffusion[:, None, None] * np.sqrt(-dt) * z
       return x, x_mean
 
     elif self.obj=='adj':
       z = gen_noise_adj(adj, flags, sym=self.sde.sym)
-      drift, diffusion = self.rsde.sde(x, adj, flags, t, is_adj=True)
+      drift, diffusion = self.rsde.sde(x, adj, flags, t, pe, is_adj=True)
       adj_mean = adj + drift * dt
       adj = adj_mean + diffusion[:, None, None] * np.sqrt(-dt) * z
 
@@ -70,17 +70,17 @@ class ReverseDiffusionPredictor(Predictor):
     super().__init__(sde, score_fn, probability_flow)
     self.obj = obj
 
-  def update_fn(self, x, adj, flags, t):
+  def update_fn(self, x, adj, flags, t, pe):
 
     if self.obj == 'x':
-      f, G = self.rsde.discretize(x, adj, flags, t, is_adj=False)
+      f, G = self.rsde.discretize(x, adj, flags, t, pe, is_adj=False)
       z = gen_noise_x(x, flags)
       x_mean = x - f
       x = x_mean + G[:, None, None] * z
       return x, x_mean
 
     elif self.obj == 'adj':
-      f, G = self.rsde.discretize(x, adj, flags, t, is_adj=True)
+      f, G = self.rsde.discretize(x, adj, flags, t, pe, is_adj=True)
       z = gen_noise_adj(adj, flags, sym=self.sde.sym)
       adj_mean = adj - f
       adj = adj_mean + G[:, None, None] * z
@@ -111,7 +111,7 @@ class LangevinCorrector(Corrector):
     super().__init__(sde, score_fn, snr, scale_eps, n_steps)
     self.obj = obj
 
-  def update_fn(self, x, adj, flags, t):
+  def update_fn(self, x, adj, flags, t, pe):
     sde = self.sde
     score_fn = self.score_fn
     n_steps = self.n_steps
@@ -126,7 +126,7 @@ class LangevinCorrector(Corrector):
 
     if self.obj == 'x':
       for i in range(n_steps):
-        grad = score_fn(x, adj, flags, t)
+        grad = score_fn(x, adj, flags, t, pe)
         noise = gen_noise_x(x, flags)
         grad_norm = torch.norm(grad.reshape(grad.shape[0], -1), dim=-1).mean()
         noise_norm = torch.norm(noise.reshape(noise.shape[0], -1), dim=-1).mean()
@@ -137,7 +137,7 @@ class LangevinCorrector(Corrector):
 
     elif self.obj == 'adj':
       for i in range(n_steps):
-        grad = score_fn(x, adj, flags, t)
+        grad = score_fn(x, adj, flags, t, pe)
         noise = gen_noise_adj(adj, flags, sym=self.sde.sym)
         grad_norm = torch.norm(grad.reshape(grad.shape[0], -1), dim=-1).mean()
         noise_norm = torch.norm(noise.reshape(noise.shape[0], -1), dim=-1).mean()
@@ -156,7 +156,7 @@ def get_pc_sampler(sde_x, sde_adj, shape_x, shape_adj, predictor='Euler', correc
                    probability_flow=False, continuous=False,
                    denoise=True, eps=1e-3, device='cuda'):
 
-  def pc_sampler(model_x, model_adj, init_flags, x=None, adj=None):
+  def pc_sampler(model_x, model_adj, init_flags, x=None, adj=None, pe=None):
 
     score_fn_x = get_score_fn(sde_x, model_x, train=False, continuous=continuous)
     score_fn_adj = get_score_fn(sde_adj, model_adj, train=False, continuous=continuous)
@@ -192,12 +192,12 @@ def get_pc_sampler(sde_x, sde_adj, shape_x, shape_adj, predictor='Euler', correc
         vec_t = torch.ones(bs, device=t.device) * t
 
         _x = x
-        x, x_mean = corrector_obj_x.update_fn(x, adj, flags, vec_t)
-        adj, adj_mean = corrector_obj_adj.update_fn(_x, adj, flags, vec_t)
+        x, x_mean = corrector_obj_x.update_fn(x, adj, flags, vec_t, pe)
+        adj, adj_mean = corrector_obj_adj.update_fn(_x, adj, flags, vec_t, pe)
 
         _x = x
-        x, x_mean = predictor_obj_x.update_fn(x, adj, flags, vec_t)
-        adj, adj_mean = predictor_obj_adj.update_fn(_x, adj, flags, vec_t)
+        x, x_mean = predictor_obj_x.update_fn(x, adj, flags, vec_t, pe)
+        adj, adj_mean = predictor_obj_adj.update_fn(_x, adj, flags, vec_t, pe)
       print(' ')
       return (x_mean if denoise else x), (adj_mean if denoise else adj), diff_steps * (n_steps + 1)
   return pc_sampler
@@ -209,7 +209,7 @@ def S4_solver(sde_x, sde_adj, shape_x, shape_adj, predictor='None', corrector='N
                         probability_flow=False, continuous=False,
                         denoise=True, eps=1e-3, device='cuda'):
 
-  def s4_solver(model_x, model_adj, init_flags, x=None, adj=None):
+  def s4_solver(model_x, model_adj, init_flags, x=None, adj=None, pe=None):
 
     score_fn_x = get_score_fn(sde_x, model_x, train=False, continuous=continuous)
     score_fn_adj = get_score_fn(sde_adj, model_adj, train=False, continuous=continuous)
@@ -238,8 +238,8 @@ def S4_solver(sde_x, sde_adj, shape_x, shape_adj, predictor='None', corrector='N
         vec_dt = torch.ones(bs, device=t.device) * (dt/2) 
 
         # -------- Score computation --------
-        score_x = score_fn_x(x, adj, flags, vec_t)
-        score_adj = score_fn_adj(x, adj, flags, vec_t)
+        score_x = score_fn_x(x, adj, flags, vec_t, pe)
+        score_adj = score_fn_adj(x, adj, flags, vec_t, pe)
 
         Sdrift_x = -sde_x.sde(x, vec_t)[1][:, None, None] ** 2 * score_x
         Sdrift_adj  = -sde_adj.sde(adj, vec_t)[1][:, None, None] ** 2 * score_adj
@@ -299,16 +299,16 @@ def get_ode_sampler(sde_x, sde_adj, shape_x, shape_adj, predictor='None', correc
                     probability_flow=False, continuous=False,
                     denoise=True, eps=1e-3, device='cuda',
                     rtol=1e-5, atol=1e-5, method='RK45',):
-  def drift_fn(model, x, adj, flags, t, is_adj):
+  def drift_fn(model, x, adj, flags, t, pe, is_adj):
     """Get the drift function of the reverse-time SDE."""
     if is_adj:
       score_fn = get_score_fn(sde_adj, model, train=False, continuous=True)
       rsde = sde_adj.reverse(score_fn, probability_flow=True)
-      return rsde.sde(x, adj, flags, t, is_adj=True)[0]
+      return rsde.sde(x, adj, flags, t, pe, is_adj=True)[0]
     else:
       score_fn = get_score_fn(sde_x, model, train=False, continuous=True)
       rsde = sde_x.reverse(score_fn, probability_flow=True)
-      return rsde.sde(x, adj, flags, t, is_adj=False)[0]
+      return rsde.sde(x, adj, flags, t, pe, is_adj=False)[0]
 
   def to_flattened_numpy(x):
     """Flatten a torch tensor `x` and convert it to numpy."""
@@ -318,7 +318,7 @@ def get_ode_sampler(sde_x, sde_adj, shape_x, shape_adj, predictor='None', correc
     """Form a torch tensor with the given `shape` from a flattened numpy array `x`."""
     return torch.from_numpy(x.reshape(shape))
   
-  def ode_sampler(model_x, model_adj, init_flags, x=None, adj=None):
+  def ode_sampler(model_x, model_adj, init_flags, x=None, adj=None, pe=None):
     with torch.no_grad():
       # -------- Initial sample --------
       flags = init_flags
@@ -342,9 +342,9 @@ def get_ode_sampler(sde_x, sde_adj, shape_x, shape_adj, predictor='None', correc
          x = from_flattened_numpy(x, shape_x).to(device).type(torch.float32)
          adj = from_flattened_numpy(adj, shape_adj).to(device).type(torch.float32)
          vec_t = torch.ones(bs, device=x.device) * t
-         drift_x = drift_fn(model_x, x, adj, flags, vec_t, is_adj=False)
+         drift_x = drift_fn(model_x, x, adj, flags, vec_t, pe, is_adj=False)
          drift_x = to_flattened_numpy(drift_x)
-         drift_adj = drift_fn(model_adj, x, adj, flags, vec_t, is_adj=True)
+         drift_adj = drift_fn(model_adj, x, adj, flags, vec_t, pe, is_adj=True)
          drift_adj = to_flattened_numpy(drift_adj)
          drift = np.concatenate((drift_x, drift_adj))
          return drift

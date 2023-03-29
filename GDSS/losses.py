@@ -10,10 +10,10 @@ def get_score_fn(sde, model, train=True, continuous=True):
   model_fn = model
 
   if isinstance(sde, VPSDE) or isinstance(sde, subVPSDE):
-    def score_fn(x, adj, flags, t):
+    def score_fn(x, adj, flags, t, pe):
       # Scale neural network output by standard deviation and flip sign
       if continuous:
-        score = model_fn(x, adj, flags)
+        score = model_fn(x, adj, flags, pe)
         std = sde.marginal_prob(torch.zeros_like(adj), t)[1]
       else:
         raise NotImplementedError(f"Discrete not supported")
@@ -39,7 +39,7 @@ def get_sde_loss_fn(sde_x, sde_adj, train=True, reduce_mean=False, continuous=Tr
   
   reduce_op = torch.mean if reduce_mean else lambda *args, **kwargs: 0.5 * torch.sum(*args, **kwargs)
 
-  def loss_fn(model_x, model_adj, x, adj):
+  def loss_fn(model_x, model_adj, x, adj, pe):
 
     score_fn_x = get_score_fn(sde_x, model_x, train=train, continuous=continuous)
     score_fn_adj = get_score_fn(sde_adj, model_adj, train=train, continuous=continuous)
@@ -57,8 +57,8 @@ def get_sde_loss_fn(sde_x, sde_adj, train=True, reduce_mean=False, continuous=Tr
     perturbed_adj = mean_adj + std_adj[:, None, None] * z_adj
     perturbed_adj = mask_adjs(perturbed_adj, flags)
 
-    score_x = score_fn_x(perturbed_x, perturbed_adj, flags, t)
-    score_adj = score_fn_adj(perturbed_x, perturbed_adj, flags, t)
+    score_x = score_fn_x(perturbed_x, perturbed_adj, flags, t, pe)
+    score_adj = score_fn_adj(perturbed_x, perturbed_adj, flags, t, pe)
 
     if not likelihood_weighting:
       losses_x = torch.square(score_x * std_x[:, None, None] + z_x)

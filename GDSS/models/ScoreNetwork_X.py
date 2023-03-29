@@ -8,24 +8,26 @@ from .attention import  AttentionLayer
 
 class ScoreNetworkX(torch.nn.Module):
 
-    def __init__(self, max_feat_num, depth, nhid):
+    def __init__(self, max_feat_num, depth, nhid, pe_num):
 
         super(ScoreNetworkX, self).__init__()
 
         self.nfeat = max_feat_num
         self.depth = depth
         self.nhid = nhid
+        self.pe_num = pe_num
 
         self.layers = torch.nn.ModuleList()
-        self.layers.append(DenseGCNConv(self.nfeat, self.nhid))
+        self.layers.append(DenseGCNConv(self.nfeat + self.pe_num, self.nhid))
 
-        self.fdim = self.nfeat + self.depth * self.nhid
+        self.fdim = self.nfeat + self.pe_num + self.depth * self.nhid
         self.final = MLP(num_layers=3, input_dim=self.fdim, hidden_dim=2*self.fdim, output_dim=self.nfeat, 
                             use_bn=False, activate_func=F.elu)
 
         self.activation = torch.tanh
 
-    def forward(self, x, adj, flags):
+    def forward(self, x, adj, flags, pe):
+        x = torch.concat((x, pe), -1)
 
         x_list = [x]
         for _ in range(self.depth):

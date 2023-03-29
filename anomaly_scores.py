@@ -22,6 +22,7 @@ def calculate_scores(config, loader, data_len, exp_name, num_sample=1, plot_grap
     for i, batch in tqdm(enumerate(loader)):
         x = batch[0]
         adj = batch[1]
+        pe = batch[2]
 
         # Normalization terms (number of nodes in each graph and number of features)
         num_nodes = count_nodes(adj)

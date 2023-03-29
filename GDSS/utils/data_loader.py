@@ -19,6 +19,10 @@ def collate_fn(graphs, max_node_num, dequantize):
                                   (0, 0, 0, max(max_node_num - len(g.nodes()), 0)), 
                                   "constant", 0)
                             for g in graphs])
+    pe_tensor = torch.stack([F.pad(g.ndata['pe'], 
+                                  (0, 0, 0, max(max_node_num - len(g.nodes()), 0)), 
+                                  "constant", 0)
+                            for g in graphs])
 
     if dequantize:
         flags = node_flags(adjs_tensor)
@@ -27,7 +31,7 @@ def collate_fn(graphs, max_node_num, dequantize):
         adjs_tensor -= torch.sign(adjs_tensor - 0.5) * noise
         adjs_tensor = mask_adjs(adjs_tensor, flags)
 
-    return x_tensor, adjs_tensor
+    return x_tensor, adjs_tensor, pe_tensor
 
 
 def dataloader(config, dataset, shuffle=True, drop_last=True, dequantize=False):

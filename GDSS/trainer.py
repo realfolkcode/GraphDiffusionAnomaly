@@ -59,8 +59,8 @@ class Trainer(object):
 
                 self.optimizer_x.zero_grad()
                 self.optimizer_adj.zero_grad()
-                x, adj = load_batch(train_b, self.device) 
-                loss_subject = (x, adj)
+                x, adj, pe = load_batch(train_b, self.device) 
+                loss_subject = (x, adj, pe)
 
                 loss_x, loss_adj = self.loss_fn(self.model_x, self.model_adj, *loss_subject)
                 loss_x.backward()

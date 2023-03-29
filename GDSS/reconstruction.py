@@ -55,10 +55,10 @@ class Reconstructor(torch.nn.Module):
         
     
     def forward(self, batch):
-        x, adj = load_batch(batch, self.device) 
+        x, adj, pe = load_batch(batch, self.device) 
         perturbed_x, perturbed_adj, flags = self.perturb(x, adj)
         x, adj, _ = self.sampling_fn(self.model_x, self.model_adj, flags,
-                                     x=perturbed_x, adj=perturbed_adj)
+                                     x=perturbed_x, adj=perturbed_adj, pe=pe)
         adj = quantize(adj)
         return x, adj
         

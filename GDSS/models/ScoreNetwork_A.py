@@ -101,7 +101,7 @@ class BaselineNetwork(torch.nn.Module):
 class ScoreNetworkA(BaselineNetwork):
 
     def __init__(self, max_feat_num, max_node_num, nhid, num_layers, num_linears, 
-                    c_init, c_hid, c_final, adim, num_heads=4, conv='GCN', sym=True):
+                    c_init, c_hid, c_final, adim, num_heads=4, conv='GCN', sym=True, pe_num=4):
 
         super(ScoreNetworkA, self).__init__(max_feat_num, max_node_num, nhid, num_layers, num_linears, 
                                             c_init, c_hid, c_final, adim, num_heads=4, conv='GCN')
@@ -110,9 +110,10 @@ class ScoreNetworkA(BaselineNetwork):
         self.num_heads = num_heads
         self.conv = conv
         self.sym = sym
+        self.pe_num = pe_num
 
         self.layers = torch.nn.ModuleList()
-        self.layers.append(AttentionLayer(self.num_linears, self.nfeat, self.nhid, self.nhid, self.c_init, 
+        self.layers.append(AttentionLayer(self.num_linears, self.nfeat + self.pe_num, self.nhid, self.nhid, self.c_init, 
                                           self.c_final, self.num_heads, self.conv, self.sym))
 
         self.fdim = self.c_hid*(self.num_layers-1) + self.c_final + self.c_init
@@ -121,7 +122,8 @@ class ScoreNetworkA(BaselineNetwork):
         self.mask = torch.ones([self.max_node_num, self.max_node_num]) - torch.eye(self.max_node_num)
         self.mask.unsqueeze_(0)  
 
-    def forward(self, x, adj, flags):
+    def forward(self, x, adj, flags, pe):
+        x = torch.concat((x, pe), -1)
 
         adjc = pow_tensor(adj, self.c_init)
 
