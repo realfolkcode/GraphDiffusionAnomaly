@@ -8,7 +8,7 @@ from .attention import  AttentionLayer
 
 class ScoreNetworkX(torch.nn.Module):
 
-    def __init__(self, max_feat_num, depth, nhid, pe_num):
+    def __init__(self, max_feat_num, depth, nhid, pe_num, guidance):
 
         super(ScoreNetworkX, self).__init__()
 
@@ -16,6 +16,7 @@ class ScoreNetworkX(torch.nn.Module):
         self.depth = depth
         self.nhid = nhid
         self.pe_num = pe_num
+        self.guidance = guidance
 
         self.layers = torch.nn.ModuleList()
         self.layers.append(DenseGCNConv(self.nfeat + self.pe_num, self.nhid))

@@ -43,6 +43,8 @@ class Trainer(object):
 
         self.loss_fn = load_loss_fn(self.config)
 
+        p_uncond = self.config.train.p_uncond
+
         # -------- Training --------
         for epoch in trange(0, (self.config.train.num_epochs), desc = '[Epoch]', position = 1, leave=False):
 
@@ -61,8 +63,8 @@ class Trainer(object):
                 self.optimizer_adj.zero_grad()
 
                 x, adj, pe = load_batch(train_b, self.device)
-                uncond_probs = np.random.rand(pe.shape[0])
-                pe[np.where(uncond_probs < 0.5)] = 0
+                uncond_rv = np.random.rand(pe.shape[0])
+                pe[np.where(uncond_rv < p_uncond)] = 0
                 loss_subject = (x, adj, pe)
 
                 loss_x, loss_adj = self.loss_fn(self.model_x, self.model_adj, *loss_subject)

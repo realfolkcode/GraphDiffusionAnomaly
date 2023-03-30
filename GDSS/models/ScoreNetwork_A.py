@@ -101,7 +101,7 @@ class BaselineNetwork(torch.nn.Module):
 class ScoreNetworkA(BaselineNetwork):
 
     def __init__(self, max_feat_num, max_node_num, nhid, num_layers, num_linears, 
-                    c_init, c_hid, c_final, adim, num_heads=4, conv='GCN', sym=True, pe_num=4):
+                    c_init, c_hid, c_final, adim, num_heads=4, conv='GCN', sym=True, pe_num=4, guidance=1):
 
         super(ScoreNetworkA, self).__init__(max_feat_num, max_node_num, nhid, num_layers, num_linears, 
                                             c_init, c_hid, c_final, adim, num_heads=4, conv='GCN')
@@ -111,6 +111,7 @@ class ScoreNetworkA(BaselineNetwork):
         self.conv = conv
         self.sym = sym
         self.pe_num = pe_num
+        self.guidance = guidance
 
         self.layers = torch.nn.ModuleList()
         self.layers.append(AttentionLayer(self.num_linears, self.nfeat + self.pe_num, self.nhid, self.nhid, self.c_init, 

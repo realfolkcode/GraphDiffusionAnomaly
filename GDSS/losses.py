@@ -3,8 +3,9 @@ from .sde import VPSDE, VESDE, subVPSDE
 from .utils.graph_utils import node_flags, mask_x, mask_adjs, gen_noise_adj, gen_noise_x
 
 
-def get_score_fn(sde, model, train=True, continuous=True, guidance=1):
+def get_score_fn(sde, model, train=True, continuous=True):
 
+  guidance = model.guidance
   if not train:
     model.eval()
   model_fn = model

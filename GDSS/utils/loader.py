@@ -159,15 +159,15 @@ def load_model_params(config):
                     'nhid': config_m.nhid, 'num_linears': config_m.num_linears,
                     'c_init': config_m.c_init, 'c_hid': config_m.c_hid, 'c_final': config_m.c_final, 
                     'adim': config_m.adim, 'num_heads': config_m.num_heads, 'conv':config_m.conv,
-                    'pe_num': pe_num}
+                    'pe_num': pe_num, 'guidance': config_m.guidance}
     else:
         params_x = {'model_type':config_m.x, 'max_feat_num':max_feat_num, 'depth':config_m.depth, 'nhid':config_m.nhid,
-                    'pe_num': pe_num}
+                    'pe_num': pe_num, 'guidance': config_m.guidance}
     params_adj = {'model_type':config_m.adj, 'max_feat_num':max_feat_num, 'max_node_num':config.data.max_node_num, 
                     'nhid':config_m.nhid, 'num_layers':config_m.num_layers, 'num_linears':config_m.num_linears, 
                     'c_init':config_m.c_init, 'c_hid':config_m.c_hid, 'c_final':config_m.c_final, 
                     'adim':config_m.adim, 'num_heads':config_m.num_heads, 'conv':config_m.conv,
-                    'pe_num': pe_num}
+                    'pe_num': pe_num, 'guidance': config_m.guidance}
     return params_x, params_adj
 
 

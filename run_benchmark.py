@@ -53,11 +53,18 @@ def draw_hyperparameters(config, dataset_name, exp_num):
         hid_dim = [8, 12, 16]
     else:
         hid_dim = [32, 64, 128, 256]
+    
+    guidance = [0.5, 1, 2]
+    num_partition = [2, 4, 8]
 
     config.train.lr = choice(lr)
     config.train.weight_decay = weight_decay
     config.model.hdim = choice(hid_dim)
     config.model.adim = config.model.hdim
+
+    config.model.guidance = choice(guidance)
+    config.data.num_partition = choice(num_partition)
+    config.train.p_uncond = 1 / (config.data.num_partition + 1)
 
     return config
 
@@ -68,13 +75,8 @@ def run_benchmark(args):
     config = get_config(args.config, args.seed)
     exp_name = args.exp_name
 
-    # Load dataset
     radius = args.radius
     dataset_name = config.data.data
-    num_partition = config.data.num_partition
-    dataset = AnomalyDataset(dataset_name, num_partition=num_partition, radius=radius, undirected=config.model.sym)
-    print(f'Dataset: {dataset_name}')
-    print(f'Number of nodes: {len(dataset)}')
 
     config.train.print_interval = 50
 
@@ -89,6 +91,11 @@ def run_benchmark(args):
         print(f'Feature dimension: {config.data.max_feat_num}')
         
         config = draw_hyperparameters(config, dataset_name, i)
+        num_partition = config.data.num_partition
+
+        dataset = AnomalyDataset(dataset_name, num_partition=num_partition, radius=radius, undirected=config.model.sym)
+        print(f'Dataset: {dataset_name}')
+        print(f'Number of nodes: {len(dataset)}')
         
         run_experiment(config, dataset, f'{exp_name}_{i}', 
                        trajectory_sample=args.trajectory_sample, num_sample=args.num_sample,
