@@ -55,7 +55,7 @@ class ScoreNetworkX_GMH(torch.nn.Module):
         self.c_init = c_init
 
         self.layers = torch.nn.ModuleList()
-        if len(self.depth) == 1:
+        if self.depth == 1:
             self.layers.append(AttentionLayer(num_linears, max_feat_num, nhid, nhid, c_init, 
                                             c_final, num_heads, conv))
         else:
