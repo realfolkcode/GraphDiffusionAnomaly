@@ -112,7 +112,7 @@ class ScoreNetworkA(BaselineNetwork):
         self.sym = sym
 
         self.layers = torch.nn.ModuleList()
-        if len(self.layers) == 1:
+        if len(self.num_layers) == 1:
             self.layers.append(AttentionLayer(self.num_linears, self.nfeat, self.nhid, self.nhid, self.c_init, 
                                               self.c_final, self.num_heads, self.conv, self.sym))
         else:
