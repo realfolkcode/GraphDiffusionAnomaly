@@ -58,7 +58,7 @@ class SDE(abc.ABC):
     Returns:
       f, G
     """
-    dt = 1 / self.N
+    dt = self.endtime / self.N
     drift, diffusion = self.sde(x, t)
     f = drift * dt
     G = diffusion * torch.sqrt(torch.tensor(dt, device=t.device))

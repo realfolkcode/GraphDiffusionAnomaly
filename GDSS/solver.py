@@ -44,7 +44,7 @@ class EulerMaruyamaPredictor(Predictor):
     self.obj = obj
 
   def update_fn(self, x, adj, flags, t):
-    dt = -1. / self.rsde.N
+    dt = -self.rsde.T / self.rsde.N
 
     if self.obj=='x':
       z = gen_noise_x(x, flags)
@@ -227,7 +227,7 @@ def S4_solver(sde_x, sde_adj, shape_x, shape_adj, predictor='None', corrector='N
           adj = mask_adjs(adj, flags)
       diff_steps = sde_adj.N
       timesteps = torch.linspace(sde_adj.T, eps, diff_steps, device=device)
-      dt = -1. / diff_steps
+      dt = -sde_adj.T / diff_steps
 
       bs = adj.shape[0]
 
