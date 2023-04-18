@@ -94,7 +94,6 @@ def load_sde(config_sde):
     endtime = config_sde.endtime
     beta_min = config_sde.beta_min
     beta_max = config_sde.beta_max
-    beta_max = beta_min + (beta_max - beta_min) * endtime
     sym = config_sde.sym
 
     if sde_type == 'VP':
