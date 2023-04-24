@@ -58,7 +58,7 @@ class SDE(abc.ABC):
     Returns:
       f, G
     """
-    dt = 1 / self.N
+    dt = self.endtime / self.N
     drift, diffusion = self.sde(x, t)
     f = drift * dt
     G = diffusion * torch.sqrt(torch.tensor(dt, device=t.device))
@@ -117,7 +117,7 @@ class VPSDE(SDE):
     self.beta_0 = beta_min
     self.beta_1 = beta_max
     self.N = N
-    self.discrete_betas = torch.linspace(beta_min / N, beta_max / N, N)
+    self.discrete_betas = torch.linspace(beta_min * endtime / N, (beta_min + (beta_max - beta_min) * endtime) / N, N)
     self.alphas = 1. - self.discrete_betas
     self.alphas_cumprod = torch.cumprod(self.alphas, dim=0)
     self.sqrt_alphas_cumprod = torch.sqrt(self.alphas_cumprod)

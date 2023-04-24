@@ -91,10 +91,10 @@ def load_batch(batch, device):
 
 def load_sde(config_sde):
     sde_type = config_sde.type
-    beta_min = config_sde.beta_min
-    beta_max = config_sde.beta_max
     num_scales = config_sde.num_scales
     endtime = config_sde.endtime
+    beta_min = config_sde.beta_min
+    beta_max = config_sde.beta_max
     sym = config_sde.sym
 
     if sde_type == 'VP':

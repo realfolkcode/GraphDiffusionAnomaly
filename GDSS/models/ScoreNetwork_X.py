@@ -19,7 +19,11 @@ class ScoreNetworkX(torch.nn.Module):
         self.guidance = guidance
 
         self.layers = torch.nn.ModuleList()
-        self.layers.append(DenseGCNConv(self.nfeat + self.pe_num, self.nhid))
+        for _ in range(self.depth):
+            if _ == 0:
+                self.layers.append(DenseGCNConv(self.nfeat + self.pe_num, self.nhid))
+            else:
+                self.layers.append(DenseGCNConv(self.nhid, self.nhid))
 
         self.fdim = self.nfeat + self.pe_num + self.depth * self.nhid
         self.final = MLP(num_layers=3, input_dim=self.fdim, hidden_dim=2*self.fdim, output_dim=self.nfeat, 
@@ -54,8 +58,20 @@ class ScoreNetworkX_GMH(torch.nn.Module):
         self.c_init = c_init
 
         self.layers = torch.nn.ModuleList()
-        self.layers.append(AttentionLayer(num_linears, max_feat_num, nhid, nhid, c_init, 
-                                          c_final, num_heads, conv))
+        if self.depth == 1:
+            self.layers.append(AttentionLayer(num_linears, max_feat_num, nhid, nhid, c_init, 
+                                            c_final, num_heads, conv))
+        else:
+            for _ in range(self.depth):
+                if _ == 0:
+                    self.layers.append(AttentionLayer(num_linears, max_feat_num, nhid, nhid, c_init, 
+                                                    c_hid, num_heads, conv))
+                elif _ == self.depth - 1:
+                    self.layers.append(AttentionLayer(num_linears, nhid, adim, nhid, c_hid, 
+                                                    c_final, num_heads, conv))
+                else:
+                    self.layers.append(AttentionLayer(num_linears, nhid, adim, nhid, c_hid, 
+                                                    c_hid, num_heads, conv))
 
         fdim = max_feat_num + depth * nhid
         self.final = MLP(num_layers=3, input_dim=fdim, hidden_dim=2*fdim, output_dim=max_feat_num, 
