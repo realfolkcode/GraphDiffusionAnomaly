@@ -84,7 +84,12 @@ def run_benchmark(args):
         print(f'Running experiment no. {i}')
         config = get_config(args.config, args.seed)
         
-        config = draw_hyperparameters(config, dataset_name, i)
+        if args.skip_training:
+            ckpt_path = f'./checkpoints/{config.data.data}/{exp_name}.pth'
+            config = torch.load(ckpt_path)['model_config']
+            config.ckpt = exp_name
+        else:
+            config = draw_hyperparameters(config, dataset_name, i)
         num_partition = config.data.num_partition
 
         dataset = AnomalyDataset(dataset_name, num_partition=num_partition, radius=radius, undirected=config.model.sym)
