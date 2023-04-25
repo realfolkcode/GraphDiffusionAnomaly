@@ -85,7 +85,7 @@ def run_benchmark(args):
         config = get_config(args.config, args.seed)
         
         if args.skip_training:
-            ckpt_path = f'./checkpoints/{config.data.data}/{exp_name}.pth'
+            ckpt_path = f'./checkpoints/{config.data.data}/{exp_name}_{i}.pth'
             config = torch.load(ckpt_path)['model_config']
             config.ckpt = exp_name
         else:
