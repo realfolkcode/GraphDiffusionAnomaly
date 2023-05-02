@@ -20,7 +20,7 @@ class ScoreNetworkX(torch.nn.Module):
         self.step_size = step_size
 
         # Encoder
-        self.enc = torch.nn.Linear(self.n_feat, self.nhid, bias=False)
+        self.enc = torch.nn.Linear(self.nfeat, self.nhid, bias=False)
 
         self.conv_layer = DenseGRAFFConv(self.nhid)
 
