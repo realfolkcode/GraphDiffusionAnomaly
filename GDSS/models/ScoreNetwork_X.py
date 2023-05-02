@@ -1,43 +1,45 @@
 import torch
 import torch.nn.functional as F
+import torch.nn.utils.parametrize as parametrize
 
 from .layers import DenseGCNConv, MLP
 from ..utils.graph_utils import mask_x, pow_tensor
 from .attention import  AttentionLayer
+from .graff import DenseGRAFFConv, External, Pairwise, Source
 
 
 class ScoreNetworkX(torch.nn.Module):
 
-    def __init__(self, max_feat_num, depth, nhid):
+    def __init__(self, max_feat_num, depth, nhid, step_size=0.5):
 
         super(ScoreNetworkX, self).__init__()
 
         self.nfeat = max_feat_num
         self.depth = depth
         self.nhid = nhid
+        self.step_size = step_size
 
-        self.layers = torch.nn.ModuleList()
-        for _ in range(self.depth):
-            if _ == 0:
-                self.layers.append(DenseGCNConv(self.nfeat, self.nhid))
-            else:
-                self.layers.append(DenseGCNConv(self.nhid, self.nhid))
+        # Encoder
+        self.enc = torch.nn.Linear(self.n_feat, self.nhid, bias=False)
 
-        self.fdim = self.nfeat + self.depth * self.nhid
+        self.conv_layer = DenseGRAFFConv(self.nhid)
+
+        self.fdim = (self.depth + 1) * self.nhid
         self.final = MLP(num_layers=3, input_dim=self.fdim, hidden_dim=2*self.fdim, output_dim=self.nfeat, 
                             use_bn=False, activate_func=F.elu)
 
         self.activation = torch.tanh
 
     def forward(self, x, adj, flags):
-
+        x = self.enc(x)
         x_list = [x]
-        for _ in range(self.depth):
-            x = self.layers[_](x, adj)
-            x = self.activation(x)
-            x_list.append(x)
 
-        xs = torch.cat(x_list, dim=-1) # B x N x (F + num_layers x H)
+        with parametrize.cached():
+            for _ in range(self.depth):
+                x = x + self.step_size * self.activation(self.conv_layer(x, adj, x_list[0]))
+                x_list.append(x)
+
+        xs = torch.cat(x_list, dim=-1) # B x N x (H + num_layers x H)
         out_shape = (adj.shape[0], adj.shape[1], -1)
         x = self.final(xs).view(*out_shape)
 

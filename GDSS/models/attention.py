@@ -4,6 +4,7 @@ from torch.nn import Parameter
 import torch.nn.functional as F
 
 from .layers import DenseGCNConv, MLP
+from .graff import DenseGRAFFConv, External, Pairwise, Source
 from ..utils.graph_utils import mask_adjs, mask_x
 
 
@@ -27,12 +28,23 @@ class Attention(torch.nn.Module):
 
         if self.conv == 'GCN':
             Q = self.gnn_q(x, adj) 
-            K = self.gnn_k(x, adj) 
+            K = self.gnn_k(x, adj)
+        elif self.conv == 'GRAFF':
+            Q = self.gnn_q[0](x)
+            Q = Q + self.gnn_q[1](Q, adj, Q)
+            
+            K = self.gnn_k[0](x)
+            K = K + self.gnn_k[1](K, adj, K)
         else:
             Q = self.gnn_q(x) 
             K = self.gnn_k(x)
 
-        V = self.gnn_v(x, adj) 
+        if self.conv == 'GRAFF':
+            V = self.gnn_v[0](x)
+            V = V + self.gnn_v[1](V, adj, V)
+        else:
+            V = self.gnn_v(x, adj)
+        
         dim_split = self.attn_dim // self.num_heads
         Q_ = torch.cat(Q.split(dim_split, 2), 0)
         K_ = torch.cat(K.split(dim_split, 2), 0)
@@ -66,6 +78,17 @@ class Attention(torch.nn.Module):
             gnn_q = MLP(num_layers, in_dim, 2*attn_dim, attn_dim, activate_func=torch.tanh)
             gnn_k = MLP(num_layers, in_dim, 2*attn_dim, attn_dim, activate_func=torch.tanh)
             gnn_v = DenseGCNConv(in_dim, out_dim)
+
+            return gnn_q, gnn_k, gnn_v
+
+        elif conv == 'GRAFF':
+            gnn_q = [torch.nn.Linear(in_dim, attn_dim, bias=False)]
+            gnn_k = [torch.nn.Linear(in_dim, attn_dim, bias=False)]
+            gnn_v = [torch.nn.Linear(in_dim, out_dim, bias=False)]
+
+            gnn_q.append(DenseGRAFFConv(attn_dim))
+            gnn_k.append(DenseGRAFFConv(attn_dim))
+            gnn_v.append(DenseGRAFFConv(out_dim))
 
             return gnn_q, gnn_k, gnn_v
 

@@ -92,6 +92,7 @@ class DenseGCNConv(torch.nn.Module):
         return '{}({}, {})'.format(self.__class__.__name__, self.in_channels,
                                    self.out_channels)
 
+
 # -------- MLP layer --------
 class MLP(torch.nn.Module):
     def __init__(self, num_layers, input_dim, hidden_dim, output_dim, use_bn=False, activate_func=F.relu):
