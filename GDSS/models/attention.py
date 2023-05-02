@@ -32,7 +32,7 @@ class Attention(torch.nn.Module):
         elif self.conv == 'GRAFF':
             Q = self.gnn_q[0](x)
             Q = Q + self.gnn_q[1](Q, adj, Q)
-            
+
             K = self.gnn_k[0](x)
             K = K + self.gnn_k[1](K, adj, K)
         else:
@@ -82,9 +82,13 @@ class Attention(torch.nn.Module):
             return gnn_q, gnn_k, gnn_v
 
         elif conv == 'GRAFF':
-            gnn_q = [torch.nn.Linear(in_dim, attn_dim, bias=False)]
-            gnn_k = [torch.nn.Linear(in_dim, attn_dim, bias=False)]
-            gnn_v = [torch.nn.Linear(in_dim, out_dim, bias=False)]
+            gnn_q = torch.nn.ModuleList()
+            gnn_k = torch.nn.ModuleList()
+            gnn_v = torch.nn.ModuleList()
+
+            gnn_q.append(torch.nn.Linear(in_dim, attn_dim, bias=False))
+            gnn_k.append(torch.nn.Linear(in_dim, attn_dim, bias=False))
+            gnn_v.append(torch.nn.Linear(in_dim, out_dim, bias=False))
 
             gnn_q.append(DenseGRAFFConv(attn_dim))
             gnn_k.append(DenseGRAFFConv(attn_dim))
