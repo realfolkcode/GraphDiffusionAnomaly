@@ -5,16 +5,17 @@ from pygod.utils import load_data
 import torch_geometric
 import torch
 from torch_geometric.utils import is_undirected
-from torch_geometric.transforms import ToUndirected
+from torch_geometric.transforms import ToUndirected, AddLaplacianEigenvectorPE
 from tqdm import tqdm
 
 from utils import standardize
 
 
 class AnomalyDataset(DGLDataset):
-    def __init__(self, name, radius=1, undirected=True):
+    def __init__(self, name, radius=1, undirected=True, num_pe=16):
         self.radius = radius
         self.undirected = undirected
+        self.num_pe = num_pe
         super().__init__(name=name)
     
     def process(self):
@@ -22,6 +23,9 @@ class AnomalyDataset(DGLDataset):
 
         if self.undirected:
             data = ToUndirected()(data)
+        
+        # Add positional encoding
+        data = AddLaplacianEigenvectorPE(self.num_pe)(data) 
 
         data['x'] = standardize(data['x'])
 
