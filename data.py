@@ -25,7 +25,7 @@ class AnomalyDataset(DGLDataset):
             data = ToUndirected()(data)
         
         # Add positional encoding
-        data = AddLaplacianEigenvectorPE(self.num_pe)(data) 
+        data = AddLaplacianEigenvectorPE(self.num_pe, attr_name=None)(data) 
 
         data['x'] = standardize(data['x'])
 
