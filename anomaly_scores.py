@@ -3,17 +3,24 @@ import numpy as np
 from tqdm import tqdm
 
 from GDSS.utils.data_loader import dataloader
-from GDSS.utils.graph_utils import adjs_to_graphs, count_nodes
+from GDSS.utils.graph_utils import adjs_to_graphs, count_nodes, get_laplacian
 from GDSS.utils.plot import plot_graphs_list
 from GDSS.reconstruction import Reconstructor
 from GDSS.likelihood import LikelihoodEstimator
 
 
+def calculate_energy(x, adj, sym):
+    L = get_laplacian(adj, sym=sym)
+    E = torch.bmm(x.transpose(-1, -2), L)
+    E = torch.bmm(E, x)
+    E = torch.diagonal(L, offset=0, dim1=-2, dim2=-1)
+    return E
+
+
 def calculate_scores(config, loader, data_len, exp_name, num_sample=1, plot_graphs=True):
     reconstructor = Reconstructor(config)
 
-    x_scores = torch.zeros(data_len)
-    adj_scores = torch.zeros(data_len)
+    scores = torch.zeros(data_len)
 
     gen_graph_list = []
     orig_graph_list = []
@@ -23,30 +30,25 @@ def calculate_scores(config, loader, data_len, exp_name, num_sample=1, plot_grap
         x = batch[0]
         adj = batch[1]
 
-        # Normalization terms (number of nodes in each graph and number of features)
-        num_nodes = count_nodes(adj)
-        num_feat = x.shape[2]
-
-        x_err = torch.zeros(x.shape[0])
-        adj_err = torch.zeros(adj.shape[0])
+        batch_scores = torch.zeros(x.shape[0])
+        E_orig = calculate_energy(x, adj, sym=config.model.sym)
 
         for _ in range(num_sample):
             with torch.no_grad():
                 x_reconstructed, adj_reconstructed = reconstructor(batch)
             x_reconstructed = x_reconstructed.to('cpu')
             adj_reconstructed = adj_reconstructed.to('cpu')
+
+            E_rec = calculate_energy(x_reconstructed, adj_reconstructed, sym=config.model.sym)
             
-            x_err = x_err + torch.linalg.norm(x - x_reconstructed, dim=[1, 2]) / (num_nodes * num_feat)
-            adj_err = adj_err + torch.linalg.norm(adj - adj_reconstructed, dim=[1, 2]) / (num_nodes**2)
+            batch_scores = batch_scores + torch.abs(E_rec - E_orig) / (torch.abs(E_orig) + 1e-9)
         
-        x_err /= num_sample
-        adj_err /= num_sample
+        batch_scores /= num_sample
 
         bs = x.shape[0]
         batch_end_pos = batch_start_pos + bs
 
-        x_scores[batch_start_pos:batch_end_pos] = x_err
-        adj_scores[batch_start_pos:batch_end_pos] = adj_err
+        scores[batch_start_pos:batch_end_pos] = batch_scores
 
         batch_start_pos = batch_end_pos
 
@@ -65,7 +67,7 @@ def calculate_scores(config, loader, data_len, exp_name, num_sample=1, plot_grap
         _ = plot_graphs_list(graphs=gen_graph_list, title=f'reconstruction_{exp_name}', max_num=16, save_dir='./', 
                             pos_list=pos_list, rel_x_err=rel_x_err)
     
-    return x_scores, adj_scores
+    return scores
 
 
 def save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample=1, num_steps=100):
@@ -78,8 +80,7 @@ def save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample=1
     endtime = config.sde.adj.endtime
     T_lst = np.linspace(0, endtime, trajectory_sample + 2, endpoint=True)[1:-1]
 
-    x_scores_final = torch.zeros((data_len, trajectory_sample))
-    adj_scores_final = torch.zeros((data_len, trajectory_sample))
+    scores_final = torch.zeros((data_len, trajectory_sample))
 
     for i, T in enumerate(T_lst):
         config.sde.x.endtime = T
@@ -89,14 +90,12 @@ def save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample=1
         config.sde.adj.num_scales = new_num_scales
 
         new_exp_name = f'{exp_name}_scales_{new_num_scales}'
-        x_scores, adj_scores = calculate_scores(config, loader, data_len, new_exp_name,
-                                                num_sample=num_sample, plot_graphs=False)
-        x_scores_final[:, i] = x_scores
-        adj_scores_final[:, i] = adj_scores
+        scores = calculate_scores(config, loader, data_len, new_exp_name,
+                                  num_sample=num_sample, plot_graphs=False)
+        scores_final[:, i] = scores
     
     with open(f'{exp_name}_final_scores.npy', 'wb') as f:
-        np.save(f, x_scores_final.numpy())
-        np.save(f, adj_scores_final.numpy())
+        np.save(f, scores_final.numpy())
 
 
 def save_likelihood_scores(config, dataset, exp_name, num_sample):

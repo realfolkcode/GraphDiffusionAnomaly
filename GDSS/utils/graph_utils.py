@@ -231,3 +231,11 @@ def node_feature_to_matrix(x):
     x_pair = torch.cat([x_b, x_b.transpose(1, 2)], dim=-1)  # BS x N x N x 2F
 
     return x_pair
+
+
+def get_laplacian(adjs, sym=True):
+    if sym:
+        D = (adjs.sum(-1))**(-0.5)
+        L = torch.bmm(D, adjs)
+        L = torch.bmm(L, D)
+    return L
