@@ -236,6 +236,7 @@ def node_feature_to_matrix(x):
 def get_laplacian(adjs, sym=True):
     if sym:
         D = (adjs.sum(-1))**(-0.5)
+        D = torch.diag_embed(D, offset=0, dim1=-2, dim2=-1)
         L = torch.bmm(D, adjs)
         L = torch.bmm(L, D)
     return L
