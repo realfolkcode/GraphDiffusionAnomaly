@@ -239,4 +239,5 @@ def get_laplacian(adjs, sym=True):
         D = torch.diag_embed(D, offset=0, dim1=-2, dim2=-1)
         L = torch.bmm(D, adjs)
         L = torch.bmm(L, D)
+    L = torch.nan_to_num(L, 0)
     return L
