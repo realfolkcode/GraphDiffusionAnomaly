@@ -13,7 +13,7 @@ def calculate_energy(x, adj, sym):
     L = get_laplacian(adj, sym=sym)
     E = torch.bmm(x.transpose(-1, -2), L)
     E = torch.bmm(E, x)
-    E = torch.diagonal(E, offset=0, dim1=-2, dim2=-1)
+    E = torch.diagonal(E, offset=0, dim1=-2, dim2=-1).sum(-1)
     return E
 
 
