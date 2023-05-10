@@ -240,4 +240,7 @@ def get_laplacian(adjs, sym=True):
         L = torch.bmm(D, adjs)
         L = torch.bmm(L, D)
     L = torch.nan_to_num(L, 0)
+    I = torch.eye(L.shape[-1])
+    I = I.unsqueeze(0).repeat(L.shape[0], 1, 1)
+    L = I - L
     return L
