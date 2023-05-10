@@ -242,5 +242,7 @@ def get_laplacian(adjs, sym=True):
     L = torch.nan_to_num(L, 0)
     I = torch.eye(L.shape[-1])
     I = I.unsqueeze(0).repeat(L.shape[0], 1, 1)
+    flags = node_flags(adjs)
+    I = mask_x(I, flags)
     L = I - L
     return L
