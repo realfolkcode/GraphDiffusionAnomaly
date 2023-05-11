@@ -20,7 +20,7 @@ def calculate_energy(x, adj, sym):
 def calculate_scores(config, loader, data_len, exp_name, num_sample=1, plot_graphs=True):
     reconstructor = Reconstructor(config)
 
-    scores = torch.zeros(data_len)
+    scores = torch.zeros((data_len, num_sample))
 
     gen_graph_list = []
     orig_graph_list = []
@@ -30,20 +30,19 @@ def calculate_scores(config, loader, data_len, exp_name, num_sample=1, plot_grap
         x = batch[0]
         adj = batch[1]
 
-        batch_scores = torch.zeros(x.shape[0])
-        E_orig = calculate_energy(x, adj, sym=config.model.sym)
+        batch_scores = torch.zeros((x.shape[0], num_sample))
 
-        for _ in range(num_sample):
+        E_orig = calculate_energy(x, adj, sym=config.model.sym)
+        batch_scores[:, 0] = E_orig
+
+        for i in range(num_sample):
             with torch.no_grad():
                 x_reconstructed, adj_reconstructed = reconstructor(batch)
             x_reconstructed = x_reconstructed.to('cpu')
             adj_reconstructed = adj_reconstructed.to('cpu')
 
             E_rec = calculate_energy(x_reconstructed, adj_reconstructed, sym=config.model.sym)
-            
-            batch_scores = batch_scores + torch.abs(E_rec - E_orig) / (torch.abs(E_orig) + 1e-9)
-        
-        batch_scores /= num_sample
+            batch_scores[:, i+1] = E_rec
 
         bs = x.shape[0]
         batch_end_pos = batch_start_pos + bs
@@ -80,7 +79,7 @@ def save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample=1
     endtime = config.sde.adj.endtime
     T_lst = np.linspace(0, endtime, trajectory_sample + 2, endpoint=True)[1:-1]
 
-    scores_final = torch.zeros((data_len, trajectory_sample))
+    scores_final = torch.zeros((data_len, num_sample, trajectory_sample))
 
     for i, T in enumerate(T_lst):
         config.sde.x.endtime = T
@@ -92,7 +91,7 @@ def save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample=1
         new_exp_name = f'{exp_name}_scales_{new_num_scales}'
         scores = calculate_scores(config, loader, data_len, new_exp_name,
                                   num_sample=num_sample, plot_graphs=False)
-        scores_final[:, i] = scores
+        scores_final[:, :, i] = scores
     
     with open(f'{exp_name}_final_scores.npy', 'wb') as f:
         np.save(f, scores_final.numpy())
