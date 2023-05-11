@@ -20,7 +20,7 @@ def calculate_energy(x, adj, sym):
 def calculate_scores(config, loader, data_len, exp_name, num_sample=1, plot_graphs=True):
     reconstructor = Reconstructor(config)
 
-    scores = torch.zeros((data_len, num_sample))
+    scores = torch.zeros((data_len, num_sample + 1))
 
     gen_graph_list = []
     orig_graph_list = []
