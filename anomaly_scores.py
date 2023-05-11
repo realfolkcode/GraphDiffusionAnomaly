@@ -30,7 +30,7 @@ def calculate_scores(config, loader, data_len, exp_name, num_sample=1, plot_grap
         x = batch[0]
         adj = batch[1]
 
-        batch_scores = torch.zeros((x.shape[0], num_sample))
+        batch_scores = torch.zeros((x.shape[0], num_sample + 1))
 
         E_orig = calculate_energy(x, adj, sym=config.model.sym)
         batch_scores[:, 0] = E_orig
@@ -79,7 +79,7 @@ def save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample=1
     endtime = config.sde.adj.endtime
     T_lst = np.linspace(0, endtime, trajectory_sample + 2, endpoint=True)[1:-1]
 
-    scores_final = torch.zeros((data_len, num_sample, trajectory_sample))
+    scores_final = torch.zeros((data_len, num_sample + 1, trajectory_sample))
 
     for i, T in enumerate(T_lst):
         config.sde.x.endtime = T
