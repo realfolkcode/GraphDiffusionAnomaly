@@ -20,7 +20,11 @@ def calculate_energy(x, adj, sym):
 def calculate_scores(config, loader, data_len, exp_name, num_sample=1, plot_graphs=True):
     reconstructor = Reconstructor(config)
 
-    scores = torch.zeros((data_len, num_sample + 1))
+    E_orig = torch.zeros(data_len)
+    E_rec = torch.zeros((data_len, num_sample))
+
+    X_norm_orig = torch.zeros(data_len)
+    X_norm_rec = torch.zeros((data_len, num_sample))
 
     gen_graph_list = []
     orig_graph_list = []
@@ -30,24 +34,24 @@ def calculate_scores(config, loader, data_len, exp_name, num_sample=1, plot_grap
         x = batch[0]
         adj = batch[1]
 
-        batch_scores = torch.zeros((x.shape[0], num_sample + 1))
+        bs = x.shape[0]
+        batch_end_pos = batch_start_pos + bs
 
-        E_orig = calculate_energy(x, adj, sym=config.model.sym)
-        batch_scores[:, 0] = E_orig
+        X_norm_orig[batch_start_pos:batch_end_pos] = torch.linalg.norm(x, dim=(1,2))
 
-        for i in range(num_sample):
+        batch_E_orig = calculate_energy(x, adj, sym=config.model.sym)
+        batch_E_rec = torch.zeros((bs, num_sample))
+
+        for sample_idx in range(num_sample):
             with torch.no_grad():
                 x_reconstructed, adj_reconstructed = reconstructor(batch)
             x_reconstructed = x_reconstructed.to('cpu')
             adj_reconstructed = adj_reconstructed.to('cpu')
+            batch_E_rec[:, sample_idx] = calculate_energy(x_reconstructed, adj_reconstructed, sym=config.model.sym)
+            X_norm_rec[batch_start_pos:batch_end_pos, sample_idx] = torch.linalg.norm(x_reconstructed, dim=(1,2))
 
-            E_rec = calculate_energy(x_reconstructed, adj_reconstructed, sym=config.model.sym)
-            batch_scores[:, i+1] = E_rec
-
-        bs = x.shape[0]
-        batch_end_pos = batch_start_pos + bs
-
-        scores[batch_start_pos:batch_end_pos] = batch_scores
+        E_orig[batch_start_pos:batch_end_pos] = batch_E_orig
+        E_rec[batch_start_pos:batch_end_pos] = batch_E_rec
 
         batch_start_pos = batch_end_pos
 
@@ -66,7 +70,7 @@ def calculate_scores(config, loader, data_len, exp_name, num_sample=1, plot_grap
         _ = plot_graphs_list(graphs=gen_graph_list, title=f'reconstruction_{exp_name}', max_num=16, save_dir='./', 
                             pos_list=pos_list, rel_x_err=rel_x_err)
     
-    return scores
+    return E_orig, E_rec, X_norm_orig, X_norm_rec
 
 
 def save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample=1, num_steps=100):
@@ -79,7 +83,8 @@ def save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample=1
     endtime = config.sde.adj.endtime
     T_lst = np.linspace(0, endtime, trajectory_sample + 2, endpoint=True)[1:-1]
 
-    scores_final = torch.zeros((data_len, num_sample + 1, trajectory_sample))
+    E_rec_final = torch.zeros((data_len, num_sample, trajectory_sample))
+    X_norm_rec_final = torch.zeros((data_len, num_sample, trajectory_sample))
 
     for i, T in enumerate(T_lst):
         config.sde.x.endtime = T
@@ -89,12 +94,16 @@ def save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample=1
         config.sde.adj.num_scales = new_num_scales
 
         new_exp_name = f'{exp_name}_scales_{new_num_scales}'
-        scores = calculate_scores(config, loader, data_len, new_exp_name,
-                                  num_sample=num_sample, plot_graphs=False)
-        scores_final[:, :, i] = scores
+        E_orig_final, E_rec, X_norm_orig_final, X_norm_rec = calculate_scores(config, loader, data_len, new_exp_name,
+                                                                              num_sample=num_sample, plot_graphs=False)
+        E_rec_final[:, :, i] = E_rec
+        X_norm_rec_final[:, :, i] = X_norm_rec
     
     with open(f'{exp_name}_final_scores.npy', 'wb') as f:
-        np.save(f, scores_final.numpy())
+        np.save(f, E_orig_final.numpy())
+        np.save(f, E_rec_final.numpy())
+        np.save(f, X_norm_orig_final.numpy())
+        np.save(f, X_norm_rec_final.numpy())
 
 
 def save_likelihood_scores(config, dataset, exp_name, num_sample):
