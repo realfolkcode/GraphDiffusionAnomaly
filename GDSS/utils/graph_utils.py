@@ -237,9 +237,9 @@ def get_laplacian(adjs, sym=True):
     if sym:
         D = (adjs.sum(-1))**(-0.5)
         D = torch.diag_embed(D, offset=0, dim1=-2, dim2=-1)
+        D = torch.nan_to_num(D, 0)
         L = torch.bmm(D, adjs)
         L = torch.bmm(L, D)
-    L = torch.nan_to_num(L, 0)
     I = torch.eye(L.shape[-1])
     I = I.unsqueeze(0).repeat(L.shape[0], 1, 1)
     flags = node_flags(adjs)
