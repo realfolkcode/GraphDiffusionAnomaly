@@ -1,139 +1,94 @@
-import torch
+import math
+import networkx as nx
 import numpy as np
-from tqdm import tqdm
-
-from GDSS.utils.data_loader import dataloader
-from GDSS.utils.graph_utils import adjs_to_graphs, count_nodes
-from GDSS.utils.plot import plot_graphs_list
-from GDSS.reconstruction import Reconstructor
-from GDSS.likelihood import LikelihoodEstimator
-
-
-def calculate_scores(config, loader, data_len, exp_name, num_sample=1, plot_graphs=True):
-    reconstructor = Reconstructor(config)
-
-    x_scores = torch.zeros(data_len)
-    adj_scores = torch.zeros(data_len)
-
-    gen_graph_list = []
-    orig_graph_list = []
-
-    batch_start_pos = 0
-    for i, batch in tqdm(enumerate(loader)):
-        x = batch[0]
-        adj = batch[1]
-
-        # Normalization terms (number of nodes in each graph and number of features)
-        num_nodes = count_nodes(adj)
-        num_feat = x.shape[2]
-
-        x_err = torch.zeros(x.shape[0])
-        adj_err = torch.zeros(adj.shape[0])
-
-        for _ in range(num_sample):
-            with torch.no_grad():
-                x_reconstructed, adj_reconstructed = reconstructor(batch)
-            x_reconstructed = x_reconstructed.to('cpu')
-            adj_reconstructed = adj_reconstructed.to('cpu')
-            
-            x_err = x_err + torch.linalg.norm(x - x_reconstructed, dim=[1, 2]) / (num_nodes * num_feat)
-            adj_err = adj_err + torch.linalg.norm(adj - adj_reconstructed, dim=[1, 2]) / (num_nodes**2)
-        
-        x_err /= num_sample
-        adj_err /= num_sample
-
-        bs = x.shape[0]
-        batch_end_pos = batch_start_pos + bs
-
-        x_scores[batch_start_pos:batch_end_pos] = x_err
-        adj_scores[batch_start_pos:batch_end_pos] = adj_err
-
-        batch_start_pos = batch_end_pos
-
-        # Convert the first batch to networkx for plotting
-        if i == 0 and plot_graphs:
-            eps = 1e-9
-            rel_x_err = torch.linalg.norm(x - x_reconstructed, dim=[2])
-            rel_x_err /= (torch.linalg.norm(x, dim=[2]) + eps)
-
-            nx_graphs, empty_nodes = adjs_to_graphs(adj.numpy(), False, return_empty=True)
-            orig_graph_list.extend(nx_graphs)
-            gen_graph_list.extend(adjs_to_graphs(adj_reconstructed.numpy(), False, empty_nodes=empty_nodes))
-    
-    if plot_graphs:
-        pos_list = plot_graphs_list(graphs=orig_graph_list, title=f'orig_{exp_name}', rows=4, cols=2, save_dir='./')
-        _ = plot_graphs_list(graphs=gen_graph_list, title=f'reconstruction_{exp_name}', rows=4, cols=2, save_dir='./', 
-                            pos_list=pos_list, rel_x_err=rel_x_err)
-    
-    return x_scores, adj_scores
+import os
+import matplotlib
+import matplotlib.pyplot as plt
+import pickle
+import warnings
+warnings.filterwarnings("ignore", category=matplotlib.cbook.MatplotlibDeprecationWarning)
 
 
-def save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample=1, num_steps=100):
-    loader = dataloader(config, 
-                        dataset,
-                        shuffle=False,
-                        drop_last=False)
-    data_len = len(dataset)
-    
-    endtime = config.sde.adj.endtime
-    T_lst = np.linspace(0, endtime, trajectory_sample + 2, endpoint=True)[1:-1]
+options = {
+    'node_size': 96,
+    'edge_color' : 'black',
+    'linewidths': 1.5,
+    'width': 1,
+    "edgecolors": "k"
+}
 
-    x_scores_final = torch.zeros((data_len, trajectory_sample))
-    adj_scores_final = torch.zeros((data_len, trajectory_sample))
+plt.rcParams['font.size'] = 16
 
-    for i, T in enumerate(T_lst):
-        config.sde.x.endtime = T
-        config.sde.adj.endtime = T
-        new_num_scales = int(T * num_steps)
-        config.sde.x.num_scales = new_num_scales
-        config.sde.adj.num_scales = new_num_scales
+def plot_graphs_list(graphs, title='title', rows=4, cols=2, save_dir=None, N=0, 
+                     pos_list=None, rel_x_err=None):
+    batch_size = len(graphs)
+    max_num = rows * cols
+    max_num = min(batch_size, max_num)
+    img_c = int(math.ceil(np.sqrt(max_num)))
+    figure = plt.figure(figsize=(8,16))
+    use_existing_pos = True
+    if pos_list is None:
+        pos_list = []
+        use_existing_pos = False
 
-        new_exp_name = f'{exp_name}_scales_{new_num_scales}'
-        x_scores, adj_scores = calculate_scores(config, loader, data_len, new_exp_name,
-                                                num_sample=num_sample, plot_graphs=False)
-        x_scores_final[:, i] = x_scores
-        adj_scores_final[:, i] = adj_scores
-    
-    with open(f'{exp_name}_final_scores.npy', 'wb') as f:
-        np.save(f, x_scores_final.numpy())
-        np.save(f, adj_scores_final.numpy())
+    for i in range(max_num):
+        # idx = i * (batch_size // max_num)
+        idx = i + max_num*N
+        if not isinstance(graphs[idx], nx.Graph):
+            G = graphs[idx].g.copy()
+        else:
+            G = graphs[idx].copy()
+        assert isinstance(G, nx.Graph)
+        #G.remove_nodes_from(list(nx.isolates(G)))
+        e = G.number_of_edges()
+        v = G.number_of_nodes()
+        l = nx.number_of_selfloops(G)
+
+        ax = plt.subplot(rows, cols, i + 1)
+        title_str = f'e={e - l}, n={v}'
+        # if 'lobster' in save_dir.split('/')[0]:
+        #     if is_lobster_graph(graphs[idx]):
+        #         title_str += f' [L]'
+        if not use_existing_pos:
+            pos = nx.spring_layout(G)
+            pos_list.append(pos)
+        else:
+            pos = pos_list[idx]
+        if rel_x_err is None:
+            nx.draw(G, pos, with_labels=False, **options,
+                    node_color=np.zeros(v), cmap='cool', vmin=0, vmax=1)
+        else:
+            nx.draw(G, pos, with_labels=False, **options,
+                    node_color=rel_x_err[idx][:v], cmap='cool', vmin=0, vmax=1)
+        ax.title.set_text(title_str)
+    #figure.suptitle(title)
+
+    save_fig(save_dir=save_dir, title=title)
+    return pos_list
 
 
-def save_likelihood_scores(config, dataset, exp_name, num_sample):
-    likelihood_estimator = LikelihoodEstimator(config, num_sample)
-    loader = dataloader(config, 
-                        dataset,
-                        shuffle=False,
-                        drop_last=False,
-                        dequantize=True)
-    data_len = len(dataset)
+def save_fig(save_dir=None, title='fig', dpi=300):
+    plt.tight_layout()
+    plt.subplots_adjust(top=0.85)
+    if save_dir is None:
+        plt.show()
+    else:
+        fig_dir = os.path.join(*['samples', 'fig', save_dir])
+        if not os.path.exists(fig_dir):
+            os.makedirs(fig_dir)
+        plt.savefig(os.path.join(fig_dir, title),
+                    bbox_inches='tight',
+                    dpi=dpi,
+                    transparent=False)
+        plt.close()
+    return
 
-    prior_constant_x = torch.zeros(data_len)
-    prior_constant_adj = torch.zeros(data_len)
-    prior_logp_x = torch.zeros(data_len)
-    prior_logp_adj = torch.zeros(data_len)
-    delta_logp = torch.zeros(data_len)
-    
-    batch_start_pos = 0
-    for i, batch in tqdm(enumerate(loader)):
-        x = batch[0]
-        adj = batch[1]
 
-        bs = x.shape[0]
-        batch_end_pos = batch_start_pos + bs
+def save_graph_list(log_folder_name, exp_name, gen_graph_list):
 
-        likelihood_components = likelihood_estimator(batch)
-        prior_constant_x[batch_start_pos:batch_end_pos] = likelihood_components[0]
-        prior_constant_adj[batch_start_pos:batch_end_pos] = likelihood_components[1]
-        prior_logp_x[batch_start_pos:batch_end_pos] = likelihood_components[2]
-        prior_logp_adj[batch_start_pos:batch_end_pos] = likelihood_components[3]
-        delta_logp[batch_start_pos:batch_end_pos] = likelihood_components[4]
-
-        batch_start_pos = batch_end_pos
-
-    with open(f'{exp_name}_final_scores.npy', 'wb') as f:
-        np.save(f, prior_constant_x.numpy())
-        np.save(f, prior_constant_adj.numpy())
-        np.save(f, prior_logp_x.numpy())
-        np.save(f, prior_logp_adj.numpy())
-        np.save(f, delta_logp.numpy())
+    if not(os.path.isdir('./samples/pkl/{}'.format(log_folder_name))):
+        os.makedirs(os.path.join('./samples/pkl/{}'.format(log_folder_name)))
+    with open('./samples/pkl/{}/{}.pkl'.format(log_folder_name, exp_name), 'wb') as f:
+            pickle.dump(obj=gen_graph_list, file=f, protocol=pickle.HIGHEST_PROTOCOL)
+    save_dir = './samples/pkl/{}/{}.pkl'.format(log_folder_name, exp_name)
+    return save_dir
