@@ -10,10 +10,11 @@ warnings.filterwarnings("ignore", category=matplotlib.cbook.MatplotlibDeprecatio
 
 
 options = {
-    'node_size': 2,
+    'node_size': 8,
     'edge_color' : 'black',
-    'linewidths': 1,
-    'width': 0.5
+    'linewidths': 0.5,
+    'width': 0.5,
+    "edgecolors": "k"
 }
 
 def plot_graphs_list(graphs, title='title', rows=4, cols=2, save_dir=None, N=0, 
@@ -52,10 +53,11 @@ def plot_graphs_list(graphs, title='title', rows=4, cols=2, save_dir=None, N=0,
         else:
             pos = pos_list[idx]
         if rel_x_err is None:
-            nx.draw(G, pos, with_labels=False, **options)
+            nx.draw(G, pos, with_labels=False, **options,
+                    node_color=np.zeros(v), cmap='cool', vmin=0, vmax=1)
         else:
             nx.draw(G, pos, with_labels=False, **options,
-                    node_color=rel_x_err[idx][:v], cmap=plt.cm.RdYlGn_r, vmin=0, vmax=1)
+                    node_color=rel_x_err[idx][:v], cmap='cool', vmin=0, vmax=1)
         ax.title.set_text(title_str)
     #figure.suptitle(title)
 
