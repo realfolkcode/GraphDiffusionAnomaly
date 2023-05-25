@@ -10,12 +10,14 @@ warnings.filterwarnings("ignore", category=matplotlib.cbook.MatplotlibDeprecatio
 
 
 options = {
-    'node_size': 8,
+    'node_size': 96,
     'edge_color' : 'black',
-    'linewidths': 0.5,
-    'width': 0.5,
+    'linewidths': 1.5,
+    'width': 1,
     "edgecolors": "k"
 }
+
+plt.rcParams['font.size'] = 16
 
 def plot_graphs_list(graphs, title='title', rows=4, cols=2, save_dir=None, N=0, 
                      pos_list=None, rel_x_err=None):
@@ -23,7 +25,7 @@ def plot_graphs_list(graphs, title='title', rows=4, cols=2, save_dir=None, N=0,
     max_num = rows * cols
     max_num = min(batch_size, max_num)
     img_c = int(math.ceil(np.sqrt(max_num)))
-    figure = plt.figure()
+    figure = plt.figure(figsize=(8,16))
     use_existing_pos = True
     if pos_list is None:
         pos_list = []
