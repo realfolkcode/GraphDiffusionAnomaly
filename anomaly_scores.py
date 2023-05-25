@@ -61,8 +61,8 @@ def calculate_scores(config, loader, data_len, exp_name, num_sample=1, plot_grap
             gen_graph_list.extend(adjs_to_graphs(adj_reconstructed.numpy(), False, empty_nodes=empty_nodes))
     
     if plot_graphs:
-        pos_list = plot_graphs_list(graphs=orig_graph_list, title=f'orig_{exp_name}', max_num=16, save_dir='./')
-        _ = plot_graphs_list(graphs=gen_graph_list, title=f'reconstruction_{exp_name}', max_num=16, save_dir='./', 
+        pos_list = plot_graphs_list(graphs=orig_graph_list, title=f'orig_{exp_name}', rows=4, cols=2, save_dir='./')
+        _ = plot_graphs_list(graphs=gen_graph_list, title=f'reconstruction_{exp_name}', rows=4, cols=2, save_dir='./', 
                             pos_list=pos_list, rel_x_err=rel_x_err)
     
     return x_scores, adj_scores

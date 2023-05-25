@@ -16,9 +16,10 @@ options = {
     'width': 0.5
 }
 
-def plot_graphs_list(graphs, title='title', max_num=16, save_dir=None, N=0, 
+def plot_graphs_list(graphs, title='title', rows=4, cols=2, save_dir=None, N=0, 
                      pos_list=None, rel_x_err=None):
     batch_size = len(graphs)
+    max_num = rows * cols
     max_num = min(batch_size, max_num)
     img_c = int(math.ceil(np.sqrt(max_num)))
     figure = plt.figure()
@@ -40,7 +41,7 @@ def plot_graphs_list(graphs, title='title', max_num=16, save_dir=None, N=0,
         v = G.number_of_nodes()
         l = nx.number_of_selfloops(G)
 
-        ax = plt.subplot(img_c, img_c, i + 1)
+        ax = plt.subplot(rows, cols, i + 1)
         title_str = f'e={e - l}, n={v}'
         # if 'lobster' in save_dir.split('/')[0]:
         #     if is_lobster_graph(graphs[idx]):
@@ -56,7 +57,7 @@ def plot_graphs_list(graphs, title='title', max_num=16, save_dir=None, N=0,
             nx.draw(G, pos, with_labels=False, **options,
                     node_color=rel_x_err[idx][:v], cmap=plt.cm.RdYlGn_r, vmin=0, vmax=1)
         ax.title.set_text(title_str)
-    figure.suptitle(title)
+    #figure.suptitle(title)
 
     save_fig(save_dir=save_dir, title=title)
     return pos_list
