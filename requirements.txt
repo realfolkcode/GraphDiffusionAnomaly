@@ -1,6 +1,5 @@
 tqdm
 pyyaml
-#sklearn
 pandas>=1.1.5
 cycler>=0.10.0
 easydict>=1.9
@@ -12,5 +11,6 @@ pyparsing>=2.4.7
 python-dateutil>=2.8.2
 scipy>=1.7.1
 six>=1.16.0
-#pyemd>=0.5.1
 requests
+pygod
+torchode
