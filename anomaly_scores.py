@@ -159,8 +159,8 @@ def save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample=1
 
         new_exp_name = f'{exp_name}_scales_{new_num_scales}'
         if is_energy:
-            E_orig_final, E_rec, X_norm_orig_final, X_norm_rec = calculate_scores(config, loader, data_len, new_exp_name,
-                                                                              num_sample=num_sample, plot_graphs=False)
+            E_orig_final, E_rec, X_norm_orig_final, X_norm_rec = calculate_energy_scores(config, loader, data_len, new_exp_name,
+                                                                                         num_sample=num_sample, plot_graphs=False)
             E_rec_final[:, :, i] = E_rec
             X_norm_rec_final[:, :, i] = X_norm_rec
         else:
