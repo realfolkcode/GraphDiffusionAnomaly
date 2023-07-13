@@ -231,3 +231,19 @@ def node_feature_to_matrix(x):
     x_pair = torch.cat([x_b, x_b.transpose(1, 2)], dim=-1)  # BS x N x N x 2F
 
     return x_pair
+
+
+def get_laplacian(adjs, sym=True):
+    if not sym:
+        adjs = (adjs + adjs.transpose(-1, -2)) / 2
+    D = (adjs.sum(-1))**(-0.5)
+    D = torch.diag_embed(D, offset=0, dim1=-2, dim2=-1)
+    D = torch.nan_to_num(D, 0)
+    L = torch.bmm(D, adjs)
+    L = torch.bmm(L, D)
+    I = torch.eye(L.shape[-1])
+    I = I.unsqueeze(0).repeat(L.shape[0], 1, 1)
+    flags = node_flags(adjs)
+    I = mask_x(I, flags)
+    L = I - L
+    return L

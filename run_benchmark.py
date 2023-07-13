@@ -18,6 +18,7 @@ def run_experiment(config, dataset, exp_name, **kwargs):
     num_sample = kwargs['num_sample']
     num_steps = kwargs['num_steps']
     is_likelihood = kwargs['is_likelihood']
+    is_energy = kwargs['is_energy']
     skip_training = kwargs['skip_training']
 
     # Train GDSS
@@ -37,7 +38,7 @@ def run_experiment(config, dataset, exp_name, **kwargs):
         save_likelihood_scores(config, dataset, exp_name, num_sample)
     else:
         save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample, 
-                          num_steps)
+                          num_steps, is_energy=is_energy)
 
 
 def draw_hyperparameters(config, dataset_name, exp_num):
@@ -92,7 +93,7 @@ def run_benchmark(args):
         run_experiment(config, dataset, f'{exp_name}_{i}', 
                        trajectory_sample=args.trajectory_sample, num_sample=args.num_sample,
                        num_steps=args.num_steps, is_likelihood=args.is_likelihood,
-                       skip_training=args.skip_training)
+                       is_energy=args.is_energy, skip_training=args.skip_training)
 
 
 if __name__=="__main__":
@@ -105,6 +106,7 @@ if __name__=="__main__":
     parser.add_argument('--num_steps', type=int, default=100, required=False, help='number of sampling steps')
     parser.add_argument('--seed', type=int, default=42, required=False, help='rng seed value')
     parser.add_argument('--is_likelihood', type=bool, default=False, required=False, help='compute anomaly scores as likelihood')
+    parser.add_argument('--is_energy', type=bool, default=False, required=False, help='compute anomaly scores as shift in energy')
     parser.add_argument('--skip_training', type=bool, default=False, required=False, help='skip training and use existing models')
     args = parser.parse_args()
     torch.set_num_threads(1)

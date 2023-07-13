@@ -3,7 +3,7 @@ import numpy as np
 from tqdm import tqdm
 
 from GDSS.utils.data_loader import dataloader
-from GDSS.utils.graph_utils import adjs_to_graphs, count_nodes
+from GDSS.utils.graph_utils import adjs_to_graphs, count_nodes, get_laplacian
 from GDSS.utils.plot import plot_graphs_list
 from GDSS.reconstruction import Reconstructor
 from GDSS.likelihood import LikelihoodEstimator
@@ -68,7 +68,72 @@ def calculate_scores(config, loader, data_len, exp_name, num_sample=1, plot_grap
     return x_scores, adj_scores
 
 
-def save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample=1, num_steps=100):
+def calculate_energy(x, adj, sym):
+    L = get_laplacian(adj, sym=sym)
+    E = torch.bmm(x.transpose(-1, -2), L)
+    E = torch.bmm(E, x)
+    E = torch.diagonal(E, offset=0, dim1=-2, dim2=-1).sum(-1)
+    return E
+
+
+def calculate_energy_scores(config, loader, data_len, exp_name, num_sample=1, plot_graphs=True):
+    reconstructor = Reconstructor(config)
+
+    E_orig = torch.zeros(data_len)
+    E_rec = torch.zeros((data_len, num_sample))
+
+    X_norm_orig = torch.zeros(data_len)
+    X_norm_rec = torch.zeros((data_len, num_sample))
+
+    gen_graph_list = []
+    orig_graph_list = []
+
+    batch_start_pos = 0
+    for i, batch in tqdm(enumerate(loader)):
+        x = batch[0]
+        adj = batch[1]
+
+        bs = x.shape[0]
+        batch_end_pos = batch_start_pos + bs
+
+        X_norm_orig[batch_start_pos:batch_end_pos] = torch.linalg.norm(x, dim=(1,2))
+
+        batch_E_orig = calculate_energy(x, adj, sym=config.model.sym)
+        batch_E_rec = torch.zeros((bs, num_sample))
+
+        for sample_idx in range(num_sample):
+            with torch.no_grad():
+                x_reconstructed, adj_reconstructed = reconstructor(batch)
+            x_reconstructed = x_reconstructed.to('cpu')
+            adj_reconstructed = adj_reconstructed.to('cpu')
+            batch_E_rec[:, sample_idx] = calculate_energy(x_reconstructed, adj_reconstructed, sym=config.model.sym)
+            X_norm_rec[batch_start_pos:batch_end_pos, sample_idx] = torch.linalg.norm(x_reconstructed, dim=(1,2))
+
+        E_orig[batch_start_pos:batch_end_pos] = batch_E_orig
+        E_rec[batch_start_pos:batch_end_pos] = batch_E_rec
+
+        batch_start_pos = batch_end_pos
+
+        # Convert the first batch to networkx for plotting
+        if i == 0 and plot_graphs:
+            eps = 1e-9
+            rel_x_err = torch.linalg.norm(x - x_reconstructed, dim=[2])
+            rel_x_err /= (torch.linalg.norm(x, dim=[2]) + eps)
+
+            nx_graphs, empty_nodes = adjs_to_graphs(adj.numpy(), False, return_empty=True)
+            orig_graph_list.extend(nx_graphs)
+            gen_graph_list.extend(adjs_to_graphs(adj_reconstructed.numpy(), False, empty_nodes=empty_nodes))
+    
+    if plot_graphs:
+        pos_list = plot_graphs_list(graphs=orig_graph_list, title=f'orig_{exp_name}', max_num=16, save_dir='./')
+        _ = plot_graphs_list(graphs=gen_graph_list, title=f'reconstruction_{exp_name}', max_num=16, save_dir='./', 
+                            pos_list=pos_list, rel_x_err=rel_x_err)
+    
+    return E_orig, E_rec, X_norm_orig, X_norm_rec
+
+
+
+def save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample=1, num_steps=100, is_energy=False):
     loader = dataloader(config, 
                         dataset,
                         shuffle=False,
@@ -78,8 +143,12 @@ def save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample=1
     endtime = config.sde.adj.endtime
     T_lst = np.linspace(0, endtime, trajectory_sample + 2, endpoint=True)[1:-1]
 
-    x_scores_final = torch.zeros((data_len, trajectory_sample))
-    adj_scores_final = torch.zeros((data_len, trajectory_sample))
+    if is_energy:
+        E_rec_final = torch.zeros((data_len, num_sample, trajectory_sample))
+        X_norm_rec_final = torch.zeros((data_len, num_sample, trajectory_sample))
+    else:
+        x_scores_final = torch.zeros((data_len, trajectory_sample))
+        adj_scores_final = torch.zeros((data_len, trajectory_sample))
 
     for i, T in enumerate(T_lst):
         config.sde.x.endtime = T
@@ -89,14 +158,26 @@ def save_final_scores(config, dataset, exp_name, trajectory_sample, num_sample=1
         config.sde.adj.num_scales = new_num_scales
 
         new_exp_name = f'{exp_name}_scales_{new_num_scales}'
-        x_scores, adj_scores = calculate_scores(config, loader, data_len, new_exp_name,
-                                                num_sample=num_sample, plot_graphs=False)
-        x_scores_final[:, i] = x_scores
-        adj_scores_final[:, i] = adj_scores
+        if is_energy:
+            E_orig_final, E_rec, X_norm_orig_final, X_norm_rec = calculate_scores(config, loader, data_len, new_exp_name,
+                                                                              num_sample=num_sample, plot_graphs=False)
+            E_rec_final[:, :, i] = E_rec
+            X_norm_rec_final[:, :, i] = X_norm_rec
+        else:
+            x_scores, adj_scores = calculate_scores(config, loader, data_len, new_exp_name,
+                                                    num_sample=num_sample, plot_graphs=False)
+            x_scores_final[:, i] = x_scores
+            adj_scores_final[:, i] = adj_scores
 
     with open(f'{exp_name}_final_scores.npy', 'wb') as f:
-        np.save(f, x_scores_final.numpy())
-        np.save(f, adj_scores_final.numpy())
+        if is_energy:
+            np.save(f, E_orig_final.numpy())
+            np.save(f, E_rec_final.numpy())
+            np.save(f, X_norm_orig_final.numpy())
+            np.save(f, X_norm_rec_final.numpy())
+        else:
+            np.save(f, x_scores_final.numpy())
+            np.save(f, adj_scores_final.numpy())
 
 
 def save_likelihood_scores(config, dataset, exp_name, num_sample):
