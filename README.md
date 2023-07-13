@@ -13,7 +13,8 @@ Node outlier detection in attributed graphs is a challenging problem for which t
 - `pip install -r requirements.txt`
 
 ## Usage
-`python run_benchmark.py` trains GDSS with random hyperparameters on a chosen dataset, runs inference with our methods, and repeats this pipeline 20 times
+`python run_benchmark.py` trains GDSS with random hyperparameters on a chosen dataset, runs inference with our methods, and repeats this pipeline 20 times. The result of inference is a `.npy` file with intermediate calculations.
+
 Arguments:
 - `--config` (path to a dataset config)
 - `--exp_name` (the name of the experiment/checkpoints)
@@ -22,3 +23,12 @@ Arguments:
 - `--num_sample` (the number of samples per node; $S$ in the paper)
 - `--num_steps` (the number of steps to denoise for the full time horizon $[0,1]$)
 - `--skip_training` (inference-only mode; assumes the checkpoints already exist)
+
+We evaluate our methods in a notebook by processing intermediate calculations from `.npy` files. See an example of training, inference and evaluation in Colab: <a target="_blank" href="https://colab.research.google.com/github/realfolkcode/GraphDiffusionAnomaly/blob/main/notebooks/gda_benchmark.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a>
+
+## Checkpoints
+Optionally, you can download the model checkpoints [here](https://github.com/realfolkcode/GraphDiffusionAnomaly/releases/tag/v1.0.0). 
+
+Unzip them at `./checkpoint/{dataset_name}/` and run the benchmark with the `--skip_training True` option.
