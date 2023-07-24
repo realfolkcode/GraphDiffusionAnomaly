@@ -27,11 +27,11 @@ Arguments:
 
 We evaluate our methods in a notebook by processing intermediate calculations from `.npy` files. See an example of training, inference and evaluation in Colab: 
 
-(Matrix distance as a dissimilary measure) <a target="_blank" href="https://colab.research.google.com/github/realfolkcode/GraphDiffusionAnomaly/blob/main/notebooks/gda_benchmark.ipynb">
+(Matrix distance as a dissimilarity measure) <a target="_blank" href="https://colab.research.google.com/github/realfolkcode/GraphDiffusionAnomaly/blob/main/notebooks/gda_benchmark.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a>
 
-(Shift in energy as a dissimilary measure) <a target="_blank" href="https://colab.research.google.com/github/realfolkcode/GraphDiffusionAnomaly/blob/main/notebooks/gda_benchmark_energy.ipynb">
+(Shift in energy as a dissimilarity measure) <a target="_blank" href="https://colab.research.google.com/github/realfolkcode/GraphDiffusionAnomaly/blob/main/notebooks/gda_benchmark_energy.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a>
 
