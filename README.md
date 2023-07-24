@@ -22,9 +22,16 @@ Arguments:
 - `--trajectory_sample` (the number of samples per trajectory; $K$ in the paper)
 - `--num_sample` (the number of samples per node; $S$ in the paper)
 - `--num_steps` (the number of steps to denoise for the full time horizon $[0,1]$)
+- `--is_energy` (if True, it will use shift in energy as a graph dissimilary)
 - `--skip_training` (inference-only mode; assumes the checkpoints already exist)
 
-We evaluate our methods in a notebook by processing intermediate calculations from `.npy` files. See an example of training, inference and evaluation in Colab: <a target="_blank" href="https://colab.research.google.com/github/realfolkcode/GraphDiffusionAnomaly/blob/main/notebooks/gda_benchmark.ipynb">
+We evaluate our methods in a notebook by processing intermediate calculations from `.npy` files. See an example of training, inference and evaluation in Colab: 
+
+(Matrix distance as a dissimilary measure) <a target="_blank" href="https://colab.research.google.com/github/realfolkcode/GraphDiffusionAnomaly/blob/main/notebooks/gda_benchmark.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a>
+
+(Shift in energy as a dissimilary measure) <a target="_blank" href="https://colab.research.google.com/github/realfolkcode/GraphDiffusionAnomaly/blob/main/notebooks/gda_benchmark_energy.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a>
 
